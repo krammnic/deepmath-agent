@@ -1,0 +1,9 @@
+{
+  "id": "lx-n6-diameter",
+  "title": "Directed LX: finite instance of Conjecture 11",
+  "statement": "Compute the directed LX diameter for n=6, using only L and X at unit cost, and compare with (3n^2-8n+12)/4 = 18. Right rotation is not a permitted single move. This checks one finite instance of the proposed general formula.",
+  "graph": {"family": "lx", "n": 6},
+  "objective": "diameter",
+  "expected_diameter": 18,
+  "sources": ["cayleypy-growth-v2"]
+}

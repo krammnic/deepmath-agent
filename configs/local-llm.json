@@ -1,0 +1,17 @@
+{
+  "run": {
+    "rounds": 2,
+    "top_k": 3,
+    "backend": "exact",
+    "max_states": 100000,
+    "require_qk": false
+  },
+  "llm": {
+    "model": "${DEEPMATH_MODEL}",
+    "base_url": "http://localhost:8000/v1",
+    "api_key_env": "",
+    "timeout": 120,
+    "max_completion_tokens": 4096
+  },
+  "qk": null
+}

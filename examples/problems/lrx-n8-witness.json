@@ -1,0 +1,9 @@
+{
+  "id": "lrx-n8-witness",
+  "title": "LRX reflected witness at n=8",
+  "statement": "Find and replay a path from identity to (1,0,7,6,5,4,3,2). The supplied supplement proves its distance is 28 and gives a constructive word. Replaying a path verifies its endpoint and length; do not label that alone a fresh proof of optimality or a universal diameter theorem.",
+  "graph": {"family": "lrx", "n": 8},
+  "objective": "path",
+  "target": [1, 0, 7, 6, 5, 4, 3, 2],
+  "sources": ["lrx-supplement-20260925", "automathlab"]
+}

@@ -1,0 +1,9 @@
+{
+  "id": "lrx-n6-holography-probe",
+  "title": "Holography-inspired LRX metric probe",
+  "statement": "Find a path from identity to (5,2,0,4,1,3), then propose a precise lattice-area or projection feature and test it against exact paid LRX distance. Establish graph compatibility before asserting a bound. This is an exploratory transfer, not a conjecture stated for this target in the source paper.",
+  "graph": {"family": "lrx", "n": 6},
+  "objective": "path",
+  "target": [5, 2, 0, 4, 1, 3],
+  "sources": ["cayleypy-holography-v1", "cayleypy-growth-v2"]
+}

@@ -1,0 +1,113 @@
+{
+  "kind": "path",
+  "status": "completed",
+  "backend": "cayleypy_beam",
+  "graph": {
+    "name": "lrx-8",
+    "n": 8,
+    "generators": {
+      "L": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        0
+      ],
+      "R": [
+        7,
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "X": [
+        1,
+        0,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    "expected_order": 40320,
+    "scope": "generated_component"
+  },
+  "start": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "target": [
+    1,
+    0,
+    7,
+    6,
+    5,
+    4,
+    3,
+    2
+  ],
+  "path": [
+    "X",
+    "L",
+    "X",
+    "R",
+    "X",
+    "R",
+    "X",
+    "L",
+    "X",
+    "L",
+    "X",
+    "L",
+    "L",
+    "X",
+    "L",
+    "X",
+    "L",
+    "X",
+    "R",
+    "X",
+    "R",
+    "X",
+    "L",
+    "X",
+    "L",
+    "L",
+    "L",
+    "L"
+  ],
+  "path_found": true,
+  "path_verified": true,
+  "path_length": 28,
+  "shortest_path": false,
+  "exact": false,
+  "complete": false,
+  "explored_states": null,
+  "max_depth_reached": 28,
+  "layer_sizes": [],
+  "diameter": null,
+  "termination": "path_found",
+  "metadata": {
+    "beam_width": 65536,
+    "seed": 0,
+    "max_depth": 40,
+    "distance_evidence": "verified_upper_bound",
+    "failure_interpretation": "no conclusion about shortest distance or reachability",
+    "upstream_metadata": {}
+  },
+  "evidence": "verified_path_upper_bound"
+}

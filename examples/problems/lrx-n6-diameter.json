@@ -1,0 +1,9 @@
+{
+  "id": "lrx-n6-diameter",
+  "title": "LRX upper-bound research: exact n=6 instance",
+  "statement": "Determine the diameter at n=6 and compare it with n(n-1)/2 = 15. Use this finite instance to develop or falsify ideas for a uniform upper bound. Rotations are paid moves, and permutations are linear states. A finite match does not prove the general conjecture.",
+  "graph": {"family": "lrx", "n": 6},
+  "objective": "diameter",
+  "expected_diameter": 15,
+  "sources": ["cayleypy-growth-v2", "lrx-supplement-20260925", "automathlab"]
+}

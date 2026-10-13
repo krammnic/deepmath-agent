@@ -1,0 +1,28 @@
+{
+  "run": {
+    "rounds": 3,
+    "top_k": 2,
+    "max_states": 100000,
+    "max_depth": 100,
+    "beam_width": 4096,
+    "backend": "cayleypy",
+    "device": "cpu",
+    "num_gpus": 1,
+    "seed": 42,
+    "require_qk": true
+  },
+  "llm": {
+    "model": "${DEEPMATH_MODEL}",
+    "base_url": "https://api.openai.com/v1",
+    "api_key_env": "OPENAI_API_KEY",
+    "timeout": 120,
+    "max_completion_tokens": 8192
+  },
+  "qk": {
+    "artifact_path": "${DEEPMATH_QK_ARTIFACT}",
+    "device": "cuda:0",
+    "dtype": "bfloat16",
+    "max_length": 8192,
+    "micro_batch_size": 1
+  }
+}
