@@ -17,7 +17,15 @@ flowchart LR
 
 ## Start a research session
 
-Follow the [setup guide](docs/integrations.md) to prepare your environment, model access, and scoring artifact. Then select a problem and launch a session:
+A clone contains the pinned research source. Install the environment, then follow the [setup guide](docs/integrations.md) to configure model access and fit a reasoning scorer:
+
+```bash
+python -m pip install '.[research]'
+deepmath doctor
+deepmath workspace init research
+```
+
+Select a problem and launch a session:
 
 ```bash
 export DEEPMATH_MODEL='your-model-id'
@@ -25,10 +33,10 @@ export OPENAI_API_KEY='your-key'
 export DEEPMATH_QK_ARTIFACT='/absolute/path/to/fitted-scoring-artifact.json'
 
 deepmath run examples/problems/lrx-n6-diameter.json \
-  --config configs/research.json --output runs/lrx-research
+  --config configs/research.json --workspace research --output runs/lrx-research
 ```
 
-The configuration controls the number of rounds, model choices, search budget, and compute devices. Each round combines independent proposals with critique and synthesis. Results feed into the next round, so agents can revise an argument after a failed experiment or pursue a promising construction.
+The configuration controls the number of rounds, model choices, search budget, and compute devices. Each round combines independent proposals with critique and synthesis. Results feed into the next round. The workspace retains hypotheses, findings, critiques, and open proof obligations so later sessions on the same problem can continue the investigation.
 
 Open `report.md` in the run directory for the findings and outstanding questions. The same directory contains the full experiment record and its integrity manifest. To check, reproduce, or prepare the session for review:
 
@@ -40,7 +48,9 @@ deepmath export runs/lrx-research --destination exports/lrx-research
 
 ## Explore a conjecture
 
-The included problems cover LRX and directed LX diameters, reflected witnesses, and lattice-area proposals. You can run a focused experiment before starting a longer research session:
+The experiment interface accepts permutation and Schreier actions, finite modular matrix groups, and the bundled graph and puzzle catalog. List constructors with `deepmath graphs` and inspect a problem's generators with `deepmath graph path/to/problem.json`. The full CayleyPy Python API is available in the same installation for custom experiments.
+
+The included problems cover LRX and directed LX diameters, reflected witnesses, lattice-area proposals, pancake graphs, Schreier graphs, and modular matrix groups. You can run a focused experiment before starting a longer research session:
 
 ```bash
 # Compute a finite diameter and its growth layers.

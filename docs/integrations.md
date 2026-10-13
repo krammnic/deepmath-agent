@@ -9,21 +9,13 @@ From the project root:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python scripts/bootstrap.py
-python -m pip install '.[qk]'
-python -m pip install ./external/cayleypy ./external/qk-zero-shot
+python -m pip install '.[research]'
 deepmath doctor
 ```
 
-The setup uses pinned source revisions. Existing local changes are preserved, and `python scripts/bootstrap.py --check` checks the source state without changing it. Revision and license records are retained in the [source lock](../dependencies.lock.json).
+The repository and built package contain pinned source snapshots. No additional repository checkout is needed. `python scripts/bootstrap.py --check` verifies bundled files offline. Revision, file integrity, and distribution terms are recorded in the [source lock](../dependencies.lock.json) and its source manifest.
 
-For accelerated search across several GPUs, prepare a Linux machine with the requested NVIDIA devices, CUDA toolkit, compatible compiler, and NCCL. Install the accelerator support in the same environment:
-
-```bash
-python -m pip install ./external/MultiGPUBeamSearch/integrations/cayleypy_native
-```
-
-Use [the GPU configuration](../configs/multigpu.json) for these sessions. First use may compile and calibrate the search runtime.
+For accelerated search across several GPUs, prepare a Linux machine with the requested NVIDIA devices, CUDA toolkit, compatible compiler, and NCCL. Use [the GPU configuration](../configs/multigpu.json). The installation includes the native search sources; first use may provision compiler dependencies, compile, and calibrate the runtime.
 
 ## Prepare reasoning scores
 
@@ -31,7 +23,7 @@ Fit the scorer on a varied reference set of mathematical problems and proposed s
 
 ```bash
 mkdir -p artifacts
-qk-zero-shot fit \
+deepmath qk fit \
   --reference-csv unlabeled_reference.csv \
   --model Qwen/Qwen3-8B \
   --revision b968826d9c46dd6066d109eabc6255188de91218 \
@@ -61,11 +53,12 @@ For a local model server, start from [the local configuration](../configs/local-
 ## Run and review
 
 ```bash
+deepmath workspace init research
 deepmath run examples/problems/lrx-n6-diameter.json \
-  --config configs/research.json --output runs/lrx-research
+  --config configs/research.json --workspace research --output runs/lrx-research
 ```
 
-Choose a new output directory for every session. The runner checks required scoring prerequisites before making model requests. The report presents observations and proof obligations; the structured record retains proposals, reviews, and experiment details. Completed experiments remain available if a later step fails.
+Choose a new output directory for every session. Reuse the workspace to carry verified run records, failed approaches, and open obligations into the next session on the same problem. Records from different problem definitions stay separate. The runner checks required scoring prerequisites before making model requests. Completed experiments remain available if a later step fails.
 
 ```bash
 deepmath verify-run runs/lrx-research
@@ -73,4 +66,33 @@ deepmath replay runs/lrx-research
 deepmath export runs/lrx-research --destination exports/lrx-research
 ```
 
-Export prepares a local package for review. Use its findings and handoff to choose the next bounded investigation. The [validation record](validation.md) describes the execution coverage established so far.
+Export prepares a local package for review. Inspect saved context or register an existing session with:
+
+```bash
+deepmath workspace context research examples/problems/lrx-n6-diameter.json
+deepmath workspace add research runs/lrx-research
+```
+
+The [validation record](validation.md) describes the execution coverage established so far.
+
+## Define another graph
+
+Use `deepmath graphs` to inspect constructor names and parameters. A problem can select a catalog graph directly:
+
+```json
+{
+  "id": "sl2-mod3",
+  "title": "SL(2,3) diameter",
+  "statement": "Compute the diameter with fundamental root generators and their inverses.",
+  "graph": {
+    "family": "cayleypy",
+    "constructor": "MatrixGroups.special_linear_fundamental_roots",
+    "kwargs": {"n": 2, "modulo": 3}
+  },
+  "objective": "diameter"
+}
+```
+
+Inspect the resolved action with `deepmath graph problem.json`, then use `experiment` or `run`. Explicit `permutation` graphs accept named gather generators and a `central_state`, including repeated labels. Explicit `matrix` graphs accept named square matrix generators, a modulus, and an optional central state. Targets may use flat arrays or matrix rows. The run freezes the resolved definition for replay.
+
+Diameter experiments share the state budget across all necessary roots for nonfree actions. Matrix experiments use exact arithmetic for verification and support CPU beam search; the native multi-GPU runtime accepts gather actions. For custom Python investigations, the installation provides the complete CayleyPy API, including BFS variants, random walks, datasets, predictors, models, and training utilities.

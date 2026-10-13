@@ -6,6 +6,7 @@ import json
 import os
 import re
 import sys
+import uuid
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -14,7 +15,7 @@ from .engine import run
 from .experiments import execute
 from .ledger import export_automathlab, verify_run
 from .models import Experiment, Problem, RunConfig
-from .providers import ChatCompletionsProvider, ScriptedProvider
+from .providers import ChatCompletionsProvider
 from .qk import DisabledQKVerifier, QKConfig, QKVerifier
 
 
@@ -70,14 +71,11 @@ def output_path(value: str | None) -> Path:
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(prog="deepmath", description="Multiagent Cayley graph conjecture research")
     commands = result.add_subparsers(dest="command", required=True)
-    demo = commands.add_parser("demo", help="Scripted offline agents with real exact computations; no LLM/QK inference")
-    demo.add_argument("--n", type=int, default=6)
-    demo.add_argument("--rounds", type=int, default=2)
-    demo.add_argument("--output")
     research = commands.add_parser("run", help="Run live LLM agents and configured QK/search backends")
     research.add_argument("problem")
     research.add_argument("--config", required=True)
     research.add_argument("--output")
+    research.add_argument("--workspace", type=Path, help="Retain research memory and continue from earlier findings")
     exp = commands.add_parser("experiment", help="Run one bounded experiment without LLM calls")
     exp.add_argument("problem")
     exp.add_argument("--backend", choices=["exact", "cayleypy", "multigpu"], default="exact")
@@ -95,38 +93,105 @@ def parser() -> argparse.ArgumentParser:
     export = commands.add_parser("export", help="Stage an AutoMathLab-format research package locally")
     export.add_argument("run_dir")
     export.add_argument("--destination", required=True)
+    workspace = commands.add_parser("workspace", help="Manage a continuing research investigation")
+    workspace_commands = workspace.add_subparsers(dest="workspace_command", required=True)
+    init = workspace_commands.add_parser("init", help="Initialize a research workspace")
+    init.add_argument("path", type=Path)
+    context = workspace_commands.add_parser("context", help="Inspect relevant findings and open obligations")
+    context.add_argument("path", type=Path)
+    context.add_argument("problem", type=Path)
+    register = workspace_commands.add_parser("add", help="Register a verified run in a workspace")
+    register.add_argument("path", type=Path)
+    register.add_argument("run_dir", type=Path)
+    commands.add_parser("qk", help="Fit or apply the reasoning scorer (deepmath qk --help)")
+    commands.add_parser("graphs", help="List available graph constructors and their parameters")
+    graph = commands.add_parser("graph", help="Resolve and inspect a problem's exact graph definition")
+    graph.add_argument("problem", type=Path)
     commands.add_parser("doctor", help="Report optional dependency availability without downloading models")
     return result
 
 
 def main(argv=None) -> int:
-    args = parser().parse_args(argv)
+    arguments = list(sys.argv[1:] if argv is None else argv)
     try:
-        if args.command == "doctor":
-            modules = {name: importlib.util.find_spec(name) is not None for name in ["cayleypy", "multigpubeamsearch", "qk_zero_shot", "torch", "transformers"]}
-            print(json.dumps({"python": sys.version.split()[0], "modules": modules,
-                "note": "Presence does not confirm working GPU, model access, fitted QK artifact, or API credentials."}, indent=2))
+        if arguments and arguments[0] == "qk":
+            try:
+                from qk_zero_shot.cli import parser as qk_parser
+            except ImportError as exc:
+                raise RuntimeError("Install the research environment with python -m pip install '.[research]'") from exc
+            command = qk_parser()
+            command.prog = "deepmath qk"
+            qk_args = command.parse_args(arguments[1:])
+            qk_args.func(qk_args)
             return 0
-        if args.command in {"run", "demo"}:
-            if args.command == "demo":
-                if not 4 <= args.n <= 8:
-                    raise ValueError("offline LRX demo supports n=4..8; use experiment/run for explicit larger budgets")
-                problem = default_problem(args.n)
-                config = RunConfig(rounds=args.rounds, top_k=3)
-                provider, verifier, settings = ScriptedProvider(), DisabledQKVerifier("Offline demonstration: no QK model was run"), {}
+        args = parser().parse_args(arguments)
+        if args.command in {"graphs", "graph"}:
+            from .search import graph_catalog, graph_from_config
+            if args.command == "graphs":
+                result = graph_catalog()
             else:
                 problem = Problem.from_dict(load_json(args.problem))
-                settings = expand_environment(load_json(args.config))
-                if set(settings) - {"run", "llm", "qk"}:
-                    raise ValueError("configuration accepts only run, llm and qk sections")
-                config = RunConfig(**settings.get("run", {}))
-                provider = ChatCompletionsProvider(**settings["llm"])
-                verifier = QKVerifier(QKConfig(**settings["qk"])) if settings.get("qk") else DisabledQKVerifier("No QK artifact configured")
+                result = graph_from_config(problem.graph).to_dict()
+            print(json.dumps(result, indent=2))
+            return 0
+        if args.command == "workspace":
+            from .workspace import ResearchWorkspace
+            workspace = ResearchWorkspace(args.path)
+            if args.workspace_command == "init":
+                result = workspace.initialize()
+            elif args.workspace_command == "context":
+                result = workspace.context(Problem.from_dict(load_json(args.problem)))
+            else:
+                result = workspace.publish_run(args.run_dir)
+            print(json.dumps(result, indent=2))
+            return 0
+        if args.command == "doctor":
+            modules = {}
+            for name in ["cayleypy", "multigpubeamsearch", "qk_zero_shot", "deepmath_vendor", "torch", "transformers"]:
+                spec = importlib.util.find_spec(name)
+                modules[name] = {"available": spec is not None, "path": spec.origin if spec else None}
+            sources = provenance({}).get("dependencies.lock.json", {})
+            print(json.dumps({"python": sys.version.split()[0], "modules": modules,
+                "sources": sources,
+                "note": "Presence does not confirm working GPU, model access, fitted QK artifact, or API credentials."}, indent=2))
+            return 0
+        if args.command == "run":
+            problem = Problem.from_dict(load_json(args.problem))
+            settings = expand_environment(load_json(args.config))
+            if set(settings) - {"run", "llm", "qk"}:
+                raise ValueError("configuration accepts only run, llm and qk sections")
+            config = RunConfig(**settings.get("run", {}))
+            provider = ChatCompletionsProvider(**settings["llm"])
+            verifier = QKVerifier(QKConfig(**settings["qk"])) if settings.get("qk") else DisabledQKVerifier("No QK artifact configured")
             destination = output_path(args.output)
-            with verifier:
-                summary = run(problem, config, provider, verifier, destination, provenance(settings))
+            if destination.exists() or destination.is_symlink():
+                raise FileExistsError(f"Choose a new run output directory: {destination}")
+            source_record = provenance(settings)
+            source_record["invocation_id"] = str(uuid.uuid4())
+            workspace = None
+            if getattr(args, "workspace", None):
+                from .workspace import ResearchWorkspace
+                workspace = ResearchWorkspace(args.workspace)
+                workspace.initialize()
+                source_record["research_memory"] = workspace.context(problem)
+            try:
+                with verifier:
+                    summary = run(problem, config, provider, verifier, destination, source_record)
+            except Exception:
+                if workspace is not None and (destination / "manifest.json").is_file():
+                    try:
+                        finalized = load_json(destination / "summary.json")
+                        if finalized.get("provenance", {}).get("invocation_id") == source_record["invocation_id"]:
+                            workspace.publish_run(destination)
+                    except (ValueError, KeyError, TypeError, RuntimeError, OSError) as registration_error:
+                        print(f"deepmath: workspace registration also failed: {registration_error}; "
+                              f"run evidence remains at {destination}", file=sys.stderr)
+                raise
+            if workspace is not None:
+                workspace.publish_run(destination)
             print(json.dumps({"status": summary["status"], "mode": summary["mode"], "output": str(destination.resolve()),
-                              "claim_status": summary["claim_status"]}, indent=2))
+                              "claim_status": summary["claim_status"],
+                              **({"workspace": str(args.workspace.resolve())} if workspace is not None else {})}, indent=2))
             return 0 if summary["status"] == "completed" else 2
         if args.command == "experiment":
             problem = Problem.from_dict(load_json(args.problem))

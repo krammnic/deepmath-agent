@@ -1,0 +1,165 @@
+{
+  "document_id": "2026-09-26-coordinator-upper-source-formal-map",
+  "author": "Codex coordinator, operator Aleksei Makin",
+  "date": "2026-09-26",
+  "kind": "source-to-formalization locator audit, not a new proof",
+  "source": {
+    "filename": "lrx_proof_human_readable_2026-09-19_RU.md",
+    "sha256": "8547daf9560d5e022f9b5234b3ab72f661e873d14e84eadaa703b66f03336d9d",
+    "author": "Sergey Uskov",
+    "redistribution": "not included; use existing authorized source"
+  },
+  "patch": {
+    "filename": "PATCH_RU.md",
+    "sha256": "f0b366248faee73fc7c8df7bf02379f353188942513d9c304ce65e7ab493dbab",
+    "author": "Agent A",
+    "scope": "Explicit Sep19 §4 and §7.2 corrections"
+  },
+  "formal_sources": {
+    "UpperCycleService.lean": "0453e97b5232a3275735d841e453755072d3fda6c947cc2a1b8f2763aa9f95d4",
+    "UpperExceptionalTours.lean": "327251e2e773440051a6284b9c11f5585f119b9fcbf7c5558f501650ad7a0757",
+    "UpperFiniteCutoff.lean": "35a3d80c64785d3d1d2fc8dc1b75f8592015e4b00b88c87a9961fd82f75905b5",
+    "UpperNativeLift.lean": "b9b9b89821dc0c67974b9033734822a077a970964b7eff18f1c39a47614b3b0c",
+    "UpperRecursiveInsertion.lean": "d5c1300c0ec6c7931fa55be59f84d5e57d525fa1d4524006670e3bed26be9d7b",
+    "UpperRecursiveService.lean": "70be39db693e6319c390c22aa5564b509dc0a1b8cc1ce95bdb86e9bfd6451339"
+  },
+  "lift_sha256": "ff83f12853c87c7461d50e69a70ed329152641d5502d676e9171f5703ea0648c",
+  "entries": [
+    {
+      "node": "MODEL",
+      "source_section": "§1.1, §13",
+      "line_start": 39,
+      "line_end_exclusive": 75,
+      "scope": "physical positions + cursor; exact target",
+      "modules": [
+        "UpperNativeLift.lean"
+      ],
+      "formal_locators": "Represents / canonical / step_L / step_R / step_X",
+      "remaining": "Local representation transitions exist; final graph-wide upper composition is open."
+    },
+    {
+      "node": "LIFT",
+      "source_section": "§2.1, Lemma2",
+      "line_start": 322,
+      "line_end_exclusive": 407,
+      "scope": "phase selection and majorization",
+      "modules": [],
+      "formal_locators": "exists_majorized_short_lift (PR7); periodic extension A2883",
+      "remaining": "Energy minimum is not C-minimality. A2884 verifies the scoped lift; every downstream use must need only its proved properties."
+    },
+    {
+      "node": "PLAN",
+      "source_section": "§3, Lemmas4–5",
+      "line_start": 505,
+      "line_end_exclusive": 578,
+      "scope": "source SCC, reachability, root structure",
+      "modules": [],
+      "formal_locators": "No complete interface pinned in this audit",
+      "remaining": "Need constructible reachability/root data for every input; SCC structure must not become an unexplained assumption."
+    },
+    {
+      "node": "EXEC",
+      "source_section": "§4, Lemma6 + A patch",
+      "line_start": 578,
+      "line_end_exclusive": 648,
+      "scope": "literal service and recursive insertion",
+      "modules": [
+        "UpperCycleService.lean",
+        "UpperRecursiveService.lean",
+        "UpperRecursiveInsertion.lean"
+      ],
+      "formal_locators": "cycle_service / ServiceTree.realize",
+      "remaining": "Compiler has explicit Valid/target hypotheses. Existence, recursive selection and all-n budget are separate. A patch sums subtree winding and marks cycles before recursion."
+    },
+    {
+      "node": "COST",
+      "source_section": "§5, Lemmas7–8",
+      "line_start": 648,
+      "line_end_exclusive": 763,
+      "scope": "finite capacity and quadratic gap energy",
+      "modules": [],
+      "formal_locators": "No complete bridge pinned in this audit",
+      "remaining": "Do not count the scalar certificate as proof of the geometry producing its input."
+    },
+    {
+      "node": "COST",
+      "source_section": "§6, connected branch",
+      "line_start": 763,
+      "line_end_exclusive": 875,
+      "scope": "two cursor routes and energy accounting",
+      "modules": [],
+      "formal_locators": "Conditional service baseline only",
+      "remaining": "All cursor cases, chosen positive ports and actual service costs need common witnesses."
+    },
+    {
+      "node": "PLAN/COST",
+      "source_section": "§7.1–7.2, Lemma10 + A patch",
+      "line_start": 875,
+      "line_end_exclusive": 943,
+      "scope": "bridge components; rank deletion preserves endpoint",
+      "modules": [],
+      "formal_locators": "No full rank-transfer theorem pinned",
+      "remaining": "Positive incident service ports required by the correction. External approaches may cross the cut without X; raw zero-port bound is not used."
+    },
+    {
+      "node": "PLAN/COST",
+      "source_section": "§8–§10",
+      "line_start": 986,
+      "line_end_exclusive": 1387,
+      "scope": "small blocks, shallow shell, two components",
+      "modules": [],
+      "formal_locators": "Local cutoff/tour lemmas do not cover this whole chain",
+      "remaining": "Separate structural classification, rank moves, paid route and exceptional case coverage."
+    },
+    {
+      "node": "COST",
+      "source_section": "§11.3, Lemma17",
+      "line_start": 1508,
+      "line_end_exclusive": 1585,
+      "scope": "absolute finite cutoff",
+      "modules": [
+        "UpperFiniteCutoff.lean"
+      ],
+      "formal_locators": "component_cutoff / half_size_cutoff / size_cutoff",
+      "remaining": "Proves scalar implications t≤12, m≤1379, n≤2759 under explicit inequalities. Deriving them from LRX remains an obligation."
+    },
+    {
+      "node": "CAP",
+      "source_section": "§12",
+      "line_start": 1585,
+      "line_end_exclusive": 1764,
+      "scope": "finite scalar and external certificate",
+      "modules": [
+        "UpperExceptionalTours.lean"
+      ],
+      "formal_locators": "tours16 / tours20; B cap1/2 author package2907",
+      "remaining": "Finite tours are scoped results. B538-module package has only partial independent replay2909; Admissible/ExternalRealization geometry remains open."
+    },
+    {
+      "node": "SMALL",
+      "source_section": "§13 + §14 + §15",
+      "line_start": 1764,
+      "line_end_exclusive": 1780,
+      "scope": "small n4…10 vs general n≥11",
+      "modules": [],
+      "formal_locators": "No all-small-n kernel theorem established by this locator audit",
+      "remaining": "Source explicitly uses BFS for4…10. Its printed output is source evidence, not a new replay or a Lean theorem."
+    },
+    {
+      "node": "U-ALL/EQ",
+      "source_section": "§13",
+      "line_start": 1764,
+      "line_end_exclusive": 1780,
+      "scope": "one chosen phase, exact target, lower combination",
+      "modules": [],
+      "formal_locators": "No full unconditional Lean upper/equality pinned",
+      "remaining": "Phase is part of the joint construction. Do not add an unpaid final rotation or infer all-input upper from the reflected witness."
+    }
+  ],
+  "verification": {
+    "locator_check": "agent-checked local exact files",
+    "new_lean_replay": false,
+    "independent_mathematical_review": "not performed in this audit",
+    "human_approval": "not recorded"
+  }
+}

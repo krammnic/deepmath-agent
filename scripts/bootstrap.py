@@ -1,28 +1,24 @@
 #!/usr/bin/env python3
-"""Fetch immutable dependency sources without installing or executing them.
+"""Verify bundled research sources offline; no downloads, builds, or writes.
 
-Existing directories are only inspected; mismatched, modified, untracked, or
-non-repository destinations require the owner to resolve them separately.
-``--check`` is read-only and suppresses Git's optional index writes.
+All four source trees are included in a normal clone. Install the research
+runtime with ``python -m pip install '.[research]'``. Both the default command
+and ``--check`` validate the exact files recorded in the source manifest.
 """
-
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
-import os
 import re
-import shutil
-import subprocess
 import sys
-import tempfile
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Sequence
 
 
 class BootstrapError(RuntimeError):
-    """The requested pin cannot be established without changing existing work."""
+    """Bundled sources do not match their recorded snapshot."""
 
 
 @dataclass(frozen=True)
@@ -31,156 +27,125 @@ class Repository:
     url: str
     commit: str
     path: str
+    source_manifest: str = "vendor/source-manifest.json"
 
 
-def load_lock(path: Path) -> list[Repository]:
-    """Load full commit hashes and constrained external checkout destinations."""
+def _document(path: Path) -> dict:
     try:
         document = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
-        raise BootstrapError(f"Cannot read dependency lock {path}: {exc}") from exc
-    if not isinstance(document, dict) or document.get("schema_version") != 1:
+        raise BootstrapError(f"Cannot read {path}: {exc}") from exc
+    if not isinstance(document, dict):
+        raise BootstrapError(f"Expected an object in {path}")
+    return document
+
+
+def load_lock(path: Path) -> list[Repository]:
+    document = _document(path)
+    if document.get("schema_version") != 2:
         raise BootstrapError("Unsupported dependency lock schema")
     rows = document.get("repositories")
     if not isinstance(rows, list) or not rows:
         raise BootstrapError("Dependency lock must contain a nonempty repositories array")
     repositories = []
-    names: set[str] = set()
-    paths: set[str] = set()
+    names = set()
     for row in rows:
         if not isinstance(row, dict):
-            raise BootstrapError("Each dependency lock entry must be an object")
-        fields = {key: row.get(key) for key in ("name", "url", "commit", "path")}
+            raise BootstrapError("Each dependency must be an object")
+        fields = {key: row.get(key) for key in ("name", "url", "commit", "path", "source_manifest")}
         if any(not isinstance(value, str) or not value for value in fields.values()):
-            raise BootstrapError("Each dependency needs string name, url, commit, and path fields")
+            raise BootstrapError("Each dependency needs string name, url, commit, path, and source_manifest")
         repository = Repository(**fields)
         if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", repository.name):
             raise BootstrapError(f"Invalid repository name: {repository.name!r}")
         if not re.fullmatch(r"[0-9a-f]{40}", repository.commit):
             raise BootstrapError(f"{repository.name}: commit must be a full lowercase 40-character SHA")
-        if repository.path != f"external/{repository.name}":
-            raise BootstrapError(f"{repository.name}: path must be external/{repository.name}")
-        if repository.url.startswith("-") or "\n" in repository.url or "\r" in repository.url:
-            raise BootstrapError(f"{repository.name}: invalid repository URL")
-        if repository.name in names or repository.path in paths:
+        if repository.path != f"vendor/{repository.name}" or repository.source_manifest != "vendor/source-manifest.json":
+            raise BootstrapError(f"{repository.name}: source paths must remain inside vendor")
+        if repository.name in names:
             raise BootstrapError(f"Duplicate dependency: {repository.name}")
         names.add(repository.name)
-        paths.add(repository.path)
         repositories.append(repository)
     return repositories
 
 
-def _git(arguments: Sequence[str], *, cwd: Path | None = None) -> str:
-    environment = os.environ.copy()
-    environment["GIT_OPTIONAL_LOCKS"] = "0"
-    environment["GIT_TERMINAL_PROMPT"] = "0"
-    command = ["git", "-c", f"core.hooksPath={os.devnull}", "-c", "core.fsmonitor=false", *arguments]
+def _safe_file(root: Path, relative: str) -> Path:
+    parts = PurePosixPath(relative).parts
+    if (not parts or PurePosixPath(relative).is_absolute() or ".." in parts or "\\" in relative
+            or ":" in relative or relative != PurePosixPath(relative).as_posix()):
+        raise BootstrapError(f"Invalid source path: {relative!r}")
+    candidate = root
+    for part in parts:
+        candidate = candidate / part
+        if candidate.is_symlink():
+            raise BootstrapError(f"Refusing symlink in bundled sources: {candidate}")
+    return candidate
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
     try:
-        process = subprocess.run(
-            command, cwd=cwd, env=environment, text=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
-        )
+        with path.open("rb") as stream:
+            for block in iter(lambda: stream.read(1024 * 1024), b""):
+                digest.update(block)
     except OSError as exc:
-        raise BootstrapError(f"Cannot run Git: {exc}") from exc
-    if process.returncode:
-        raise BootstrapError(process.stderr.strip() or f"Git failed with exit code {process.returncode}")
-    return process.stdout.strip()
-
-
-def _destination(root: Path, repository: Repository) -> Path:
-    destination = root / repository.path
-    # A symlink could redirect downloads or checks outside the specified root.
-    for path in (root / "external", destination):
-        if path.is_symlink():
-            raise BootstrapError(f"Refusing symlink dependency destination: {path}")
-    return destination
-
-
-def _canonical_url(url: str) -> str:
-    return url.rstrip("/").removesuffix(".git")
+        raise BootstrapError(f"Cannot read bundled source {path}: {exc}") from exc
+    return digest.hexdigest()
 
 
 def check_repository(root: Path, repository: Repository) -> None:
-    """Check checkout identity, origin, exact revision, and clean source state."""
-    destination = _destination(root, repository)
-    if not destination.is_dir():
-        raise BootstrapError(f"{repository.name}: missing checkout at {destination}")
-    top = Path(_git(["rev-parse", "--show-toplevel"], cwd=destination)).resolve()
-    if top != destination.resolve():
-        raise BootstrapError(f"{repository.name}: destination is not an independent Git checkout")
-    actual = _git(["rev-parse", "HEAD"], cwd=destination)
-    if actual != repository.commit:
-        raise BootstrapError(
-            f"{repository.name}: expected {repository.commit}, found {actual}; "
-            "existing checkout was left untouched"
-        )
-    origin = _git(["remote", "get-url", "origin"], cwd=destination)
-    if _canonical_url(origin) != _canonical_url(repository.url):
-        raise BootstrapError(f"{repository.name}: origin does not match dependency lock; checkout left untouched")
-    dirty = _git(["status", "--porcelain", "--untracked-files=all"], cwd=destination)
-    if dirty:
-        raise BootstrapError(f"{repository.name}: checkout contains local changes or untracked files; left untouched")
-
-
-def sync_repository(root: Path, repository: Repository) -> bool:
-    """Fetch a missing checkout at the pin; return true only when one was created.
-
-    Source is fetched and checked out in a temporary sibling directory. The
-    final directory is reserved exclusively before moving the completed clone,
-    so an existing directory is never replaced, even if it appears mid-fetch.
-    No package install, source build, submodule, or repository script is run.
-    """
-    destination = _destination(root, repository)
-    if destination.exists():
-        check_repository(root, repository)
-        return False
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    staging = Path(tempfile.mkdtemp(prefix=f".{repository.name}-", dir=destination.parent))
-    try:
-        _git(["init", "--quiet"], cwd=staging)
-        _git(["remote", "add", "origin", repository.url], cwd=staging)
-        _git(["fetch", "--quiet", "--depth=1", "origin", repository.commit], cwd=staging)
-        _git(["checkout", "--quiet", "--detach", repository.commit], cwd=staging)
-        if _git(["rev-parse", "HEAD"], cwd=staging) != repository.commit:
-            raise BootstrapError(f"{repository.name}: fetched commit differs from the lock")
-        # mkdir fails instead of overwriting a destination created concurrently.
-        destination.mkdir()
-        for child in staging.iterdir():
-            shutil.move(str(child), str(destination / child.name))
-        check_repository(root, repository)
-    except OSError as exc:
-        raise BootstrapError(
-            f"{repository.name}: unable to publish checkout: {exc}. "
-            "Inspect any incomplete destination before retrying."
-        ) from exc
-    finally:
-        shutil.rmtree(staging)
-    return True
+    """Check every bundled byte, reject missing/extra files, and never repair."""
+    destination = _safe_file(root, repository.path)
+    manifest_path = _safe_file(root, repository.source_manifest)
+    manifest = _document(manifest_path)
+    if manifest.get("schema_version") != 1:
+        raise BootstrapError("Unsupported source manifest schema")
+    record = manifest.get("repositories", {}).get(repository.name)
+    if not isinstance(record, dict) or record.get("commit") != repository.commit:
+        raise BootstrapError(f"{repository.name}: source manifest revision differs from dependency lock")
+    files = record.get("files")
+    if not isinstance(files, dict) or not files:
+        raise BootstrapError(f"{repository.name}: empty or invalid source manifest")
+    for relative, expected in files.items():
+        if not isinstance(expected, dict) or not re.fullmatch(r"[0-9a-f]{64}", str(expected.get("sha256"))):
+            raise BootstrapError(f"{repository.name}: invalid hash for {relative}")
+        path = _safe_file(destination, relative)
+        if not path.is_file():
+            raise BootstrapError(f"{repository.name}: missing bundled source {relative}")
+        if path.stat().st_size != expected.get("size") or _sha256(path) != expected["sha256"]:
+            raise BootstrapError(f"{repository.name}: modified bundled source {relative}; left untouched")
+    actual = set()
+    for path in destination.rglob("*"):
+        if path.is_symlink():
+            raise BootstrapError(f"{repository.name}: symlink in bundled source {path}")
+        relative = path.relative_to(destination)
+        # Imports may create bytecode; it is never part of the source snapshot.
+        if "__pycache__" in relative.parts or path.suffix in {".pyc", ".pyo"}:
+            continue
+        if path.is_file():
+            actual.add(relative.as_posix())
+    extra = actual - files.keys()
+    if extra:
+        raise BootstrapError(f"{repository.name}: unexpected bundled files: {', '.join(sorted(extra)[:5])}; left untouched")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--lock", type=Path, help="Lock path; default ROOT/dependencies.lock.json")
-    parser.add_argument("--check", action="store_true", help="Only verify pins and clean state; no downloads or writes")
+    parser.add_argument("--check", action="store_true", help="Verify bundled sources offline (also the default)")
     args = parser.parse_args(argv)
     root = args.root.expanduser().resolve()
+    lock_path = args.lock or root / "dependencies.lock.json"
     try:
-        repositories = load_lock(args.lock or root / "dependencies.lock.json")
-        # Inspect existing destinations before performing any network operation.
-        errors = []
+        repositories = load_lock(lock_path)
+        manifest_path = _safe_file(root, "vendor/source-manifest.json")
+        expected = _document(lock_path).get("source_manifest_sha256")
+        if not isinstance(expected, str) or _sha256(manifest_path) != expected:
+            raise BootstrapError("Source manifest SHA256 differs from dependency lock")
         for repository in repositories:
-            try:
-                destination = _destination(root, repository)
-                if args.check or destination.exists():
-                    check_repository(root, repository)
-            except BootstrapError as exc:
-                errors.append(str(exc))
-        if errors:
-            raise BootstrapError("\n".join(errors))
-        for repository in repositories:
-            created = False if args.check else sync_repository(root, repository)
-            print(f"{'cloned' if created else 'verified'} {repository.name} {repository.commit}")
+            check_repository(root, repository)
+            print(f"verified {repository.name} {repository.commit}")
     except BootstrapError as exc:
         print(f"bootstrap: {exc}", file=sys.stderr)
         return 1

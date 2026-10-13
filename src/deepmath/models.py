@@ -24,6 +24,14 @@ def permutation(value: Any, n: int) -> tuple[int, ...]:
     return tuple(value)
 
 
+def validate_target(value: Any, graph: Any) -> tuple[int, ...]:
+    if not isinstance(value, (list, tuple)):
+        raise ValueError("target must be an array of integers or matrix rows")
+    if value and isinstance(value[0], (list, tuple)):
+        value = [x for row in value for x in row]
+    return graph.validate_state(value, "target")
+
+
 @dataclass(frozen=True)
 class Problem:
     id: str
@@ -42,20 +50,13 @@ class Problem:
         graph = data["graph"]
         if not isinstance(graph, dict):
             raise ValueError("graph must be a JSON object")
-        family = graph.get("family")
-        if family not in {"lrx", "lx", "permutation"}:
-            raise ValueError("graph.family must be lrx, lx, or permutation")
-        n = integer(graph.get("n"), "graph.n", 2, 256)
-        graph = {"family": family, "n": n, **({"generators": graph.get("generators")} if family == "permutation" else {})}
-        if family == "permutation":
-            generators = graph["generators"]
-            if not isinstance(generators, dict) or not 1 <= len(generators) <= 128:
-                raise ValueError("permutation graphs need 1..128 named generators")
-            graph["generators"] = {text(k, "generator name", 32): list(permutation(v, n)) for k, v in generators.items()}
+        from .search import graph_from_config, normalize_graph_config
+        graph = normalize_graph_config(graph, name=data.get("id", "custom"))
+        spec = graph_from_config(graph)
         objective = data.get("objective", "diameter")
         if objective not in {"diameter", "path"}:
             raise ValueError("objective must be diameter or path")
-        target = permutation(data["target"], n) if data.get("target") is not None else None
+        target = validate_target(data["target"], spec) if data.get("target") is not None else None
         if objective == "path" and target is None:
             raise ValueError("path objective requires a target")
         expected = data.get("expected_diameter")
@@ -85,7 +86,8 @@ class Experiment:
         kind = data.get("kind")
         if kind not in {"diameter", "path", "witness", "word", "area_probe"}:
             raise ValueError("unrecognized experiment kind")
-        target = permutation(data["target"], problem.graph["n"]) if data.get("target") is not None else problem.target
+        from .search import graph_from_config
+        target = validate_target(data["target"], graph_from_config(problem.graph)) if data.get("target") is not None else problem.target
         if kind in {"path", "word"} and target is None:
             raise ValueError("path/word experiments require a target")
         if kind == "witness" and (problem.graph["family"] != "lrx" or problem.graph["n"] < 4):

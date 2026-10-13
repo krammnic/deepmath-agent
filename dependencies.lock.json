@@ -1,55 +1,73 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "captured_on": "2026-10-13",
-  "scope": "Git source revisions only; Python packages, model weights, CUDA tools, and transitive downloads are not locked by this file.",
+  "scope": "Bundled tracked source snapshots and explicit generated binary exclusions. Python packages, model weights, CUDA tools, and NVIDIA CUTLASS remain separately installed runtime dependencies.",
   "repositories": [
     {
       "name": "cayleypy",
       "url": "https://github.com/cayleypy/cayleypy.git",
       "commit": "3cd11ecefc98e54d6fc0ccdec967d0bcc8ca4a93",
-      "path": "external/cayleypy",
+      "path": "vendor/cayleypy",
       "role": "Cayley graph construction and PyTorch beam-search backend",
       "license": {
         "spdx": "MIT",
-        "files": ["LICENSE"],
+        "files": [
+          "LICENSE"
+        ],
         "note": "Copyright (c) 2025 CayleyPy Foundation; declared MIT in package metadata."
-      }
+      },
+      "source_manifest": "vendor/source-manifest.json",
+      "bundled_files": 231,
+      "excluded_files": 0
     },
     {
       "name": "qk-zero-shot",
       "url": "https://github.com/krammnic/qk-zero-shot.git",
       "commit": "b329a177a90ba69c3d224ddff5decd086a321eb9",
-      "path": "external/qk-zero-shot",
+      "path": "vendor/qk-zero-shot",
       "role": "Frozen, zero-label query/key margin for candidate reasoning assessment",
       "license": {
         "spdx": null,
         "files": [],
         "note": "No repository license file or license declaration was found at this revision; no license is inferred."
-      }
+      },
+      "source_manifest": "vendor/source-manifest.json",
+      "bundled_files": 7,
+      "excluded_files": 0
     },
     {
       "name": "MultiGPUBeamSearch",
       "url": "https://github.com/TryDotAtwo/MultiGPUBeamSearch.git",
       "commit": "1d2a1841a533cabe17c37961c208a2dd14137c00",
-      "path": "external/MultiGPUBeamSearch",
+      "path": "vendor/MultiGPUBeamSearch",
       "role": "Optional native CUDA/NCCL beam search through the multigpubeamsearch CayleyPy adapter",
       "license": {
         "spdx": "MIT",
-        "files": ["LICENSE", "integrations/cayleypy_native/LICENSE"],
+        "files": [
+          "LICENSE",
+          "integrations/cayleypy_native/LICENSE"
+        ],
         "note": "Copyright (c) 2026 Ivan Litvak and MultiGPUBeamSearch contributors. Third-party sources and weights retain their own terms."
-      }
+      },
+      "source_manifest": "vendor/source-manifest.json",
+      "bundled_files": 544,
+      "excluded_files": 599
     },
     {
       "name": "AutoMathLab",
       "url": "https://github.com/TryDotAtwo/AutoMathLab.git",
       "commit": "0d3880fdb94851c026a7362857b9edc425ccd881",
-      "path": "external/AutoMathLab",
+      "path": "vendor/AutoMathLab",
       "role": "Organizational conventions and export structure for hypotheses, experiments, results, reviews, and handoffs",
       "license": {
         "spdx": null,
         "files": [],
         "note": "No general repository license file was found. CONTRIBUTING.md requires rights and distribution terms for contributed materials; no license is inferred."
-      }
+      },
+      "source_manifest": "vendor/source-manifest.json",
+      "bundled_files": 31,
+      "excluded_files": 0
     }
-  ]
+  ],
+  "source_manifest_sha256": "72d96fa3f5694dc219a2c06e659c037044d08da8344a96b00e46603185c716c9"
 }

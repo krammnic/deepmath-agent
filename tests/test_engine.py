@@ -8,11 +8,11 @@ from deepmath.cli import default_problem, main
 from deepmath.engine import run, select_ideas
 from deepmath.ledger import export_automathlab, verify_run
 from deepmath.models import Experiment, Idea, Problem, RunConfig
-from deepmath.providers import ScriptedProvider
+from provider_fixture import FixtureProvider
 from deepmath.qk import DisabledQKVerifier, QKScore, QKUnavailableError
 
 
-class RecordingProvider(ScriptedProvider):
+class RecordingProvider(FixtureProvider):
     def __init__(self):
         self.payloads = []
 
@@ -64,7 +64,7 @@ class ResearchTests(unittest.TestCase):
         problem = default_problem(4).to_dict()
         problem["expected_diameter"] = 5
         with tempfile.TemporaryDirectory() as tmp:
-            result = run(Problem.from_dict(problem), RunConfig(rounds=1, top_k=3), ScriptedProvider(), DisabledQKVerifier(), Path(tmp) / "run")
+            result = run(Problem.from_dict(problem), RunConfig(rounds=1, top_k=3), FixtureProvider(), DisabledQKVerifier(), Path(tmp) / "run")
             observations = result["rounds"][0]["observations"]
             self.assertTrue(any(x["result"].get("expected_diameter_check") == "refuted_at_this_n" for x in observations))
             self.assertEqual(result["claim_status"], "open")
@@ -79,7 +79,7 @@ class ResearchTests(unittest.TestCase):
     def test_budget_exhaustion_inconclusive(self):
         with tempfile.TemporaryDirectory() as tmp:
             result = run(default_problem(6), RunConfig(rounds=1, top_k=3, max_states=4, max_depth=2),
-                         ScriptedProvider(), DisabledQKVerifier(), Path(tmp) / "run")
+                         FixtureProvider(), DisabledQKVerifier(), Path(tmp) / "run")
             diameter = next(x["result"] for x in result["rounds"][0]["observations"] if x["experiment"]["kind"] == "diameter")
             self.assertEqual(diameter["expected_diameter_check"], "inconclusive")
             self.assertIsNone(diameter["diameter"])
@@ -87,7 +87,7 @@ class ResearchTests(unittest.TestCase):
     def test_existing_run_is_not_overwritten(self):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaises(FileExistsError):
-                run(default_problem(4), RunConfig(), ScriptedProvider(), DisabledQKVerifier(), Path(tmp))
+                run(default_problem(4), RunConfig(), FixtureProvider(), DisabledQKVerifier(), Path(tmp))
 
     def test_replay_detects_changed_heuristic_upper_bound(self):
         old = {"status": "completed", "evidence": "verified_path_upper_bound", "path_verified": True,
@@ -95,7 +95,7 @@ class ResearchTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "run"
             with patch("deepmath.engine.execute", return_value=old):
-                run(default_problem(4), RunConfig(rounds=1, top_k=1), ScriptedProvider(), DisabledQKVerifier(), root)
+                run(default_problem(4), RunConfig(rounds=1, top_k=1), FixtureProvider(), DisabledQKVerifier(), root)
             with patch("deepmath.cli.execute", return_value={**old, "path_length": 30}):
                 self.assertEqual(main(["replay", str(root)]), 2)
 

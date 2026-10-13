@@ -2,18 +2,12 @@
 
 from .lrx import reflected_witness, witness_word
 from .models import Experiment, Problem, RunConfig
-from .search import (GraphSpec, cayleypy_search, exact_bfs, lrx_graph,
+from .search import (GraphSpec, cayleypy_search, exact_bfs, exact_diameter, graph_from_config,
                      multigpu_search, verify_path)
 
 
 def graph_for(problem: Problem) -> GraphSpec:
-    graph = problem.graph
-    if graph["family"] == "permutation":
-        return GraphSpec(problem.id, graph["generators"])
-    spec = lrx_graph(graph["n"])
-    if graph["family"] == "lx":
-        return GraphSpec(f"lx-{graph['n']}", {k: v for k, v in spec.generators.items() if k != "R"}, spec.expected_order)
-    return spec
+    return graph_from_config(problem.graph, name=problem.id)
 
 
 def execute(problem: Problem, experiment: Experiment, config: RunConfig) -> dict:
@@ -34,7 +28,7 @@ def execute(problem: Problem, experiment: Experiment, config: RunConfig) -> dict
                 "interpretation": "Word replay establishes an upper bound only; the paper's lower bound is separate evidence."}
     if experiment.kind == "diameter":
         # Beam searches cannot certify a diameter. Always use bounded exact BFS.
-        result = exact_bfs(graph, max_states=config.max_states, max_depth=config.max_depth)
+        result = exact_diameter(graph, max_states=config.max_states, max_depth=config.max_depth)
     elif config.backend == "exact":
         result = exact_bfs(graph, target=experiment.target, max_states=config.max_states, max_depth=config.max_depth)
     else:

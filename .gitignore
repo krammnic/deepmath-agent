@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 .venv/
 .venv-search/
+.venv-integration/
 .pytest_cache/
 *.egg-info/
 build/
@@ -10,9 +11,16 @@ dist/
 external/
 tmp/
 runs/
+research/
+exports/
 .env
 .env.*
 !.env.example
 *.safetensors
 *.pt
 *.pth
+
+# Pinned source snapshots may include upstream ignored source assets.
+!vendor/**
+vendor/**/__pycache__/
+vendor/**/*.py[cod]

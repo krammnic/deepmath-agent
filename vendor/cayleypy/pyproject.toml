@@ -1,0 +1,117 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools"]
+
+[project]
+# https://packaging.python.org/en/latest/specifications/declaring-project-metadata/
+name = "cayleypy"
+version = "0.2.0"
+description = "Library for studying Cayley graphs and Schreier coset graphs"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+authors = [{ name = "CayleyPy Foundation" }]
+
+# https://pypi.org/classifiers/
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+# https://peps.python.org/pep-0508/
+dependencies = [
+    "h5py",
+    "kagglehub",
+    "numba",
+    "numpy",
+    "scipy",
+    "torch>=2.6.0",
+]
+
+# Development dependencies
+# pip install .[torch,lint,test,dev,docs]
+[project.optional-dependencies]
+lint = [
+    "black==25.1.0",
+    "mypy==1.15.0",
+    "pylint"
+]
+test = [
+    "pytest",
+    "pytest-benchmark",
+]
+dev = [
+    "coverage",
+    "networkx",
+    "setuptools",
+]
+docs = [
+    # Libraries needed to build documentation.
+    "sphinx>=9.1.0",
+    "sphinx_rtd_theme",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/cayleypy/cayleypy"
+"Documentation" = "https://cayleypy.github.io/cayleypy-docs/api.html"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"cayleypy" = ["data/*.csv", "puzzles/gap_files/**"]
+
+[[tool.mypy.overrides]]
+module = ["networkx.*"]
+ignore_missing_imports = true
+[[tool.mypy.overrides]]
+module = ["tensorflow.*"]
+ignore_missing_imports = true
+[[tool.mypy.overrides]]
+module = ["numba.*"]
+ignore_missing_imports = true
+[[tool.mypy.overrides]]
+module = ["scipy.*"]
+ignore_missing_imports = true
+[[tool.mypy.overrides]]
+module = ["h5py.*"]
+ignore_missing_imports = true
+[[tool.mypy.overrides]]
+module = ["kagglehub.*"]
+ignore_missing_imports = true
+[[tool.mypy.overrides]]
+module = ["sympy.*"]
+ignore_missing_imports = true
+
+[tool.pylint."FORMAT"]
+max-line-length = 120
+max-module-lines = 2000
+[tool.pylint."MESSAGES CONTROL"]
+disable = [
+    "consider-using-enumerate",
+    "consider-using-f-string",
+    "fixme",
+    "missing-function-docstring",
+    "missing-module-docstring",
+    "no-else-return",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-branches",
+    "too-many-instance-attributes",
+    "too-many-locals",
+    "too-many-positional-arguments",
+    "too-many-public-methods",
+    "too-many-return-statements",
+    "too-many-statements",
+]
+
+[tool.pylint.SIMILARITIES]
+ignore-comments = true
+ignore-docstrings = true
+ignore-imports = true
+ignore-signatures = true
+min-similarity-lines = 10
+
+[tool.black]
+line-length = 120

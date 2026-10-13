@@ -61,6 +61,8 @@ def probe_area(
     """
     if not isinstance(graph, GraphSpec):
         raise TypeError("graph must be a deepmath.search.GraphSpec")
+    if graph.action != "permutation" or len(set(graph.identity)) != graph.n:
+        raise ValueError("Area probes currently require distinct-label permutation states")
     if graph.n > MAX_PROBE_N:
         raise ValueError(f"Area probes support n <= {MAX_PROBE_N}; choose a smaller finite instance")
     if statistic not in {"inversions", "cyclic_inversions"}:

@@ -12,9 +12,9 @@ Each proposal states its claim, gives a rationale, and requests a small number o
 
 Experiments can enumerate a finite graph, search for a path, replay a proposed word, construct the reflected LRX witness, or compare a candidate area statistic with exact distances. They run within the session's state, depth, and search-width limits.
 
-Returned paths are checked move by move. Exhaustive search establishes the diameter of the generated Cayley graph using vertex transitivity. A bounded search records its explored range, and a failed heuristic search remains inconclusive. Area probes return concrete counterexamples when a proposed inequality fails.
+Returned paths are checked move by move using exact integer actions. For a free group action, exhaustive search establishes the diameter using vertex transitivity. Other actions require searches from every vertex, sharing the overall budget; an incomplete traversal establishes only the reported bounds. A failed heuristic search remains inconclusive. Area probes return concrete counterexamples when a proposed inequality fails.
 
-The automated experiment domain is finite permutation graphs. LRX includes left and right rotation and exchange of the first two entries; directed LX omits right rotation. Custom generators use the convention `next[i] = state[generator[i]]`. Matrix groups and more general graph actions require additional experiment definitions.
+Experiments accept named graph constructors or explicit generators. Permutation actions use `next[i] = state[generator[i]]`; repeated labels define Schreier actions. Matrix actions use exact left multiplication modulo the supplied modulus with invertible generators. A resolved graph definition is stored with the run so replay does not regenerate a different graph. LRX includes paid left and right rotation and exchange of the first two entries; directed LX omits right rotation.
 
 ## Critique and refine
 
@@ -28,4 +28,4 @@ Every session records inputs, model identities, usage, scores, experiments, and 
 
 Use `verify-run` to check artifact integrity and `replay` to repeat the recorded experiments. A replay compares the evidence produced, including verified path lengths. Export creates a local review package containing the experiment record, review request, and handoff.
 
-To continue, inspect the findings and unresolved obligations, revise the problem or budget, and start a new session. Preserve the previous run as the basis for comparison. For reproducible accelerator work, keep the runtime environment and hardware details alongside the research record.
+With `--workspace`, each finalized session is registered with its hypotheses, experiments, results, reviews, and handoff. Subsequent sessions on the identical problem receive a bounded view of previous findings, errors, and open obligations. Original evidence stays archived and is checked before reuse. Changing a problem definition begins a separate research record. For reproducible accelerator work, keep the runtime environment and hardware details alongside the research record.

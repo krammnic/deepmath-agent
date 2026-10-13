@@ -10,11 +10,12 @@ from deepmath.engine import run
 from deepmath.experiments import execute
 from deepmath.ledger import export_automathlab, verification_status, verify_run
 from deepmath.models import Experiment, Problem, RunConfig
-from deepmath.providers import ProviderError, ScriptedProvider
+from deepmath.providers import ProviderError
+from provider_fixture import FixtureProvider
 from deepmath.qk import DisabledQKVerifier, QKUnavailableError
 
 
-class FailingRoleProvider(ScriptedProvider):
+class FailingRoleProvider(FixtureProvider):
     def __init__(self, role):
         self.role = role
 
@@ -78,7 +79,7 @@ class FailureRecoveryTests(unittest.TestCase):
 
     def test_all_tool_errors_never_receive_author_checked_status(self):
         with patch("deepmath.engine.execute", side_effect=RuntimeError("search unavailable")):
-            summary = self.run_with(ScriptedProvider())
+            summary = self.run_with(FixtureProvider())
         self.assertEqual(summary["status"], "completed_with_errors")
         self.assertEqual(summary["verification_status"], "not-reviewed")
         self.assertEqual(len(summary["errors"]), 2)
@@ -90,7 +91,7 @@ class FailureRecoveryTests(unittest.TestCase):
         self.assertIn("search unavailable", exported_text)
 
     def test_missing_required_qk_fails_before_llm_but_keeps_artifacts(self):
-        provider = ScriptedProvider()
+        provider = FixtureProvider()
         with patch.object(provider, "complete", side_effect=AssertionError("LLM should not run")) as complete:
             with self.assertRaises(QKUnavailableError):
                 run(self.problem, RunConfig(rounds=1, require_qk=True), provider,
@@ -136,7 +137,7 @@ class FailureRecoveryTests(unittest.TestCase):
     def test_completed_area_probe_is_finite_author_checked_evidence(self):
         probe = execute(self.problem, Experiment.from_dict({"kind": "area_probe"}, self.problem), self.config)
         with patch("deepmath.engine.execute", return_value=probe):
-            summary = self.run_with(ScriptedProvider())
+            summary = self.run_with(FixtureProvider())
         self.assertEqual(summary["status"], "completed")
         self.assertEqual(summary["verification_status"], "author-checked")
         report = (self.output / "report.md").read_text()
@@ -145,7 +146,7 @@ class FailureRecoveryTests(unittest.TestCase):
         self.assertIn("universal claim remains unestablished", report)
 
     def test_manifest_paths_cannot_reenter_root_using_parent_segments(self):
-        self.run_with(ScriptedProvider())
+        self.run_with(FixtureProvider())
         path = self.output / "manifest.json"
         manifest = json.loads(path.read_text())
         entry = dict(manifest["artifacts"][0])

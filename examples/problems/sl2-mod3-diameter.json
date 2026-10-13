@@ -1,0 +1,12 @@
+{
+  "id": "sl2-mod3-diameter",
+  "title": "Special linear group SL(2,3)",
+  "statement": "Determine the diameter of SL(2,3) with fundamental root generators and their inverses. Use exact modular matrix arithmetic to verify the finite distances.",
+  "graph": {
+    "family": "cayleypy",
+    "constructor": "MatrixGroups.special_linear_fundamental_roots",
+    "kwargs": {"n": 2, "modulo": 3}
+  },
+  "objective": "diameter",
+  "expected_diameter": 4
+}

@@ -1,0 +1,13 @@
+{
+  "id": "binary-schreier-diameter",
+  "title": "Binary adjacent-swap Schreier graph",
+  "statement": "Determine the diameter of the orbit of 0101 under adjacent swaps. Repeated labels make this a Schreier graph; a single root eccentricity does not in general determine its diameter.",
+  "graph": {
+    "family": "cayleypy",
+    "constructor": "PermutationGroups.coxeter",
+    "kwargs": {"n": 4},
+    "central_state": [0, 1, 0, 1]
+  },
+  "objective": "diameter",
+  "expected_diameter": 4
+}

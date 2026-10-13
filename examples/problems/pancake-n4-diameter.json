@@ -1,0 +1,12 @@
+{
+  "id": "pancake-n4-diameter",
+  "title": "Pancake graph at n=4",
+  "statement": "Determine the diameter of the pancake graph at n=4, with prefix reversals as generators. Use the exact finite case to investigate possible diameter bounds for the family.",
+  "graph": {
+    "family": "cayleypy",
+    "constructor": "PermutationGroups.pancake",
+    "kwargs": {"n": 4}
+  },
+  "objective": "diameter",
+  "expected_diameter": 4
+}

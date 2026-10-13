@@ -146,14 +146,28 @@ def verify_run(root: Path) -> dict:
             "scope": "file integrity and event consistency; not mathematical proof or a digital signature"}
 
 
+def copy_verified_run(root: Path, destination: Path) -> dict:
+    """Copy only manifested files, then verify the independent archived copy."""
+    root, destination = Path(root).resolve(), Path(destination)
+    verify_run(root)
+    manifest = json.loads((root / "manifest.json").read_text())
+    names = [item["path_or_url"] for item in manifest["artifacts"]]
+    if any(not isinstance(name, str) or Path(name).name != name or name in {"", ".", "..", "manifest.json"} for name in names):
+        raise ValueError("manifest artifact paths must be plain filenames")
+    destination.mkdir(parents=True, exist_ok=False)
+    for filename in names + ["manifest.json"]:
+        (destination / filename).write_bytes((root / filename).read_bytes())
+    verify_run(destination)
+    return json.loads((destination / "summary.json").read_text())
+
+
 def export_automathlab(root: Path, destination: Path) -> Path:
     root = Path(root).resolve()
     destination = Path(destination)
     verify_run(root)
-    manifest = json.loads((root / "manifest.json").read_text())
     summary = json.loads((root / "summary.json").read_text())
     topic = summary["problem"]["graph"]["family"]
-    if topic not in {"lrx", "lx", "permutation"}:
+    if topic not in {"lrx", "lx", "permutation", "matrix", "cayleypy"}:
         raise ValueError("unsupported graph family in research export")
     status = summary.get("status", "unknown")
     verification = verification_status(summary)
@@ -170,9 +184,7 @@ def export_automathlab(root: Path, destination: Path) -> Path:
         (project / kind).mkdir(parents=True)
     name = "".join(c if c.isalnum() or c in "-_" else "-" for c in root.name) or "run"
     artifact_dir = project / "experiments" / name
-    artifact_dir.mkdir()
-    for filename in [item["path_or_url"] for item in manifest["artifacts"]] + ["manifest.json"]:
-        (artifact_dir / filename).write_bytes((root / filename).read_bytes())
+    copy_verified_run(root, artifact_dir)
     (project / "experiments" / f"{name}.md").write_text(
         f"# {summary['problem']['title']}\n\nID: {name}\n\nAuthor: DeepMath research runner\n\n"
         f"Created: {summary['created']}\n\nRun status: {status}\n\nClaim status: {summary.get('claim_status', 'open')}\n\n"

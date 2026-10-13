@@ -40,7 +40,7 @@ class QKUnavailableError(RuntimeError):
 class QKConfig:
     """Configuration for an already fitted, zero-label QK artifact.
 
-    Fit the artifact with the upstream ``qk-zero-shot fit`` command first.
+    Fit the artifact with ``deepmath qk fit`` first.
     The model, revision, and selected layers come from that artifact, ensuring
     inference uses the same model and head pool that produced the weights.
     Set ``device='cpu', dtype='float32'`` explicitly for CPU inference.
@@ -130,15 +130,14 @@ class QKVerifier:
         if not path.is_file():
             raise QKUnavailableError(
                 f"QK artifact not found: {path}. Fit an unlabeled reference pool "
-                "with `qk-zero-shot fit` before enabling QK scoring."
+                "with `deepmath qk fit` (also available as `qk-zero-shot fit`) before enabling QK scoring."
             )
         try:
             backend = import_module("qk_zero_shot")
         except ImportError as exc:
             raise QKUnavailableError(
-                "QK scoring requires the optional qk-zero-shot backend and its "
-                "numpy, torch, and transformers dependencies. Install the "
-                "reviewed repository with `python -m pip install -e external/qk-zero-shot`."
+                "QK scoring requires the bundled scorer's inference dependencies. "
+                "Install them with `python -m pip install '.[research]'`."
             ) from exc
         artifact_bytes = path.read_bytes()
         artifact = backend.ZeroShotQKArtifact.load(path)

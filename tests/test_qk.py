@@ -90,7 +90,7 @@ class QKAdapterTests(unittest.TestCase):
 
     def test_missing_dependency_has_actionable_error(self):
         with patch("deepmath.qk.import_module", side_effect=ModuleNotFoundError("numpy")):
-            with self.assertRaisesRegex(QKUnavailableError, "pip install -e external/qk-zero-shot"):
+            with self.assertRaisesRegex(QKUnavailableError, "pip install"):
                 self.verifier().score_one("p", "a")
 
     def test_lazy_inference_dependency_error_is_explicit(self):

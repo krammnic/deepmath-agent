@@ -1,0 +1,8 @@
+include dependencies.lock.json
+include setup.py
+include scripts/bootstrap.py
+graft vendor
+graft references
+graft docs
+recursive-exclude * __pycache__
+global-exclude *.py[cod] .DS_Store
