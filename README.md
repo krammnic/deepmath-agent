@@ -1,6 +1,6 @@
-# DeepMath Agent
+# CayleyPy Research
 
-DeepMath is a multiagent research system for discovering and testing mathematical ideas on Cayley graphs. It turns a conjecture into a cycle of proposed arguments, computational experiments, critical review, and refined proof obligations.
+CayleyPy Research brings LLM agents into the CayleyPy research workflow. Agents investigate conjectures on Cayley and Schreier graphs through proposed arguments, graph search, reasoning scores, critical review, and refined proof obligations.
 
 Agents explore structural lemmas, search for counterexamples, and investigate geometric representations in parallel. Reasoning scores help prioritize their proposals, while exact computations and replayable witnesses establish what each experiment supports. Every session produces a research record that can be inspected, reproduced, and continued.
 
@@ -17,12 +17,12 @@ flowchart LR
 
 ## Start a research session
 
-A clone contains the pinned research source. Install the environment, then follow the [setup guide](docs/integrations.md) to configure model access and fit a reasoning scorer:
+Install the research environment, then follow the [setup guide](docs/integrations.md) to configure model access and fit a reasoning scorer:
 
 ```bash
 python -m pip install '.[research]'
-deepmath doctor
-deepmath workspace init research
+cayleypy-research doctor
+cayleypy-research workspace init research
 ```
 
 Select a problem and launch a session:
@@ -32,7 +32,7 @@ export DEEPMATH_MODEL='your-model-id'
 export OPENAI_API_KEY='your-key'
 export DEEPMATH_QK_ARTIFACT='/absolute/path/to/fitted-scoring-artifact.json'
 
-deepmath run examples/problems/lrx-n6-diameter.json \
+cayleypy-research run examples/problems/lrx-n6-diameter.json \
   --config configs/research.json --workspace research --output runs/lrx-research
 ```
 
@@ -41,26 +41,26 @@ The configuration controls the number of rounds, model choices, search budget, a
 Open `report.md` in the run directory for the findings and outstanding questions. The same directory contains the full experiment record and its integrity manifest. To check, reproduce, or prepare the session for review:
 
 ```bash
-deepmath verify-run runs/lrx-research
-deepmath replay runs/lrx-research
-deepmath export runs/lrx-research --destination exports/lrx-research
+cayleypy-research verify-run runs/lrx-research
+cayleypy-research replay runs/lrx-research
+cayleypy-research export runs/lrx-research --destination exports/lrx-research
 ```
 
 ## Explore a conjecture
 
-The experiment interface accepts permutation and Schreier actions, finite modular matrix groups, and the bundled graph and puzzle catalog. List constructors with `deepmath graphs` and inspect a problem's generators with `deepmath graph path/to/problem.json`. The full CayleyPy Python API is available in the same installation for custom experiments.
+The experiment interface accepts permutation and Schreier actions, finite modular matrix groups, and the graph and puzzle catalog. List constructors with `cayleypy-research graphs` and inspect a problem's generators with `cayleypy-research graph path/to/problem.json`. Use the CayleyPy Python API for custom experiments alongside the agent workflow.
 
 The included problems cover LRX and directed LX diameters, reflected witnesses, lattice-area proposals, pancake graphs, Schreier graphs, and modular matrix groups. You can run a focused experiment before starting a longer research session:
 
 ```bash
 # Compute a finite diameter and its growth layers.
-deepmath experiment examples/problems/lx-n6-diameter.json
+cayleypy-research experiment examples/problems/lx-n6-diameter.json
 
 # Reconstruct the reflected LRX witness.
-deepmath experiment examples/problems/lrx-n8-witness.json --kind witness
+cayleypy-research experiment examples/problems/lrx-n8-witness.json --kind witness
 
 # Test a proposed area bound against exact distances.
-deepmath experiment examples/problems/lrx-n6-holography-probe.json \
+cayleypy-research experiment examples/problems/lrx-n6-holography-probe.json \
   --kind area_probe --statistic cyclic_inversions
 ```
 

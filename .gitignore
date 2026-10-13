@@ -11,8 +11,8 @@ dist/
 external/
 tmp/
 runs/
-research/
-exports/
+/research/
+/exports/
 .env
 .env.*
 !.env.example
@@ -20,7 +20,6 @@ exports/
 *.pt
 *.pth
 
-# Pinned source snapshots may include upstream ignored source assets.
-!vendor/**
-vendor/**/__pycache__/
-vendor/**/*.py[cod]
+# Native build outputs stay outside the source tree.
+native/build/
+docs/api/_build/

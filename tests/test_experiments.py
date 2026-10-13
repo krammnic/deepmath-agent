@@ -1,15 +1,15 @@
 import unittest
 from unittest.mock import patch
 
-from deepmath.cli import default_problem
-from deepmath.experiments import execute, graph_for
-from deepmath.models import Experiment, RunConfig
-from deepmath.search import BackendUnavailable
+from cayleypy.research.cli import default_problem
+from cayleypy.research.experiments import execute, graph_for
+from cayleypy.research.models import Experiment, RunConfig
+from cayleypy.research.search import BackendUnavailable
 
 
 class ExperimentDispatchTests(unittest.TestCase):
     def test_native_dispatch_uses_supported_options(self):
-        with patch("deepmath.experiments.multigpu_search", side_effect=BackendUnavailable("hardware")) as call:
+        with patch("cayleypy.research.experiments.multigpu_search", side_effect=BackendUnavailable("hardware")) as call:
             with self.assertRaises(BackendUnavailable):
                 execute(default_problem(4), Experiment("path", (1, 0, 3, 2)), RunConfig(backend="multigpu", num_gpus=2, seed=42))
         self.assertEqual(call.call_args.kwargs["num_gpus"], 2)
@@ -17,7 +17,7 @@ class ExperimentDispatchTests(unittest.TestCase):
         self.assertNotIn("device", call.call_args.kwargs)
 
     def test_diameter_always_uses_exact_bfs(self):
-        with patch("deepmath.experiments.multigpu_search") as call:
+        with patch("cayleypy.research.experiments.multigpu_search") as call:
             result = execute(default_problem(4), Experiment("diameter"), RunConfig(backend="multigpu"))
         self.assertEqual(result["diameter"], 6)
         call.assert_not_called()

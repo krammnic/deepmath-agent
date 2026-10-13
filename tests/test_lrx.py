@@ -3,7 +3,7 @@
 from collections import deque
 import unittest
 
-from deepmath.lrx import reflected_witness, witness_word
+from cayleypy.research.lrx import reflected_witness, witness_word
 
 
 def replay(state, letters):

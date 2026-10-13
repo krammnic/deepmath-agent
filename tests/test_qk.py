@@ -7,7 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-from deepmath.qk import DisabledQKVerifier, QKConfig, QKUnavailableError, QKVerifier
+from cayleypy.research.qk import DisabledQKVerifier, QKConfig, QKUnavailableError, QKVerifier
 
 
 class QKAdapterTests(unittest.TestCase):
@@ -32,13 +32,13 @@ class QKAdapterTests(unittest.TestCase):
         return QKVerifier(QKConfig(self.path, device="cpu", dtype="float32"))
 
     def test_initialization_and_empty_batch_are_lazy(self):
-        with patch("deepmath.qk.import_module") as importer:
+        with patch("cayleypy.research.qk.import_module") as importer:
             with self.verifier() as verifier:
                 self.assertEqual(verifier.score("problem", []), [])
             importer.assert_not_called()
 
     def test_prepare_loads_backend_without_scoring(self):
-        with patch("deepmath.qk.import_module", return_value=self.backend):
+        with patch("cayleypy.research.qk.import_module", return_value=self.backend):
             with self.verifier() as verifier:
                 verifier.prepare()
                 verifier.prepare()
@@ -46,11 +46,11 @@ class QKAdapterTests(unittest.TestCase):
         self.scorer.rewards.assert_not_called()
         self.scorer.close.assert_called_once()
 
-    def test_real_upstream_api_receives_artifact_and_pairs(self):
-        with patch("deepmath.qk.import_module", return_value=self.backend) as importer:
+    def test_scorer_receives_artifact_and_pairs(self):
+        with patch("cayleypy.research.qk.import_module", return_value=self.backend) as importer:
             with self.verifier() as verifier:
                 scores = verifier.score("problem", ["idea a", "idea b", "idea c"])
-            importer.assert_called_once_with("qk_zero_shot")
+            importer.assert_called_once_with("cayleypy.qk")
         self.backend.ZeroShotQKArtifact.load.assert_called_once_with(self.path)
         self.artifact.validate.assert_called_once()
         self.backend.ZeroShotQKScorer.assert_called_once_with(
@@ -70,7 +70,7 @@ class QKAdapterTests(unittest.TestCase):
 
     def test_multiple_batches_reuse_model_and_close_is_idempotent(self):
         self.scorer.rewards.return_value = [0.2]
-        with patch("deepmath.qk.import_module", return_value=self.backend):
+        with patch("cayleypy.research.qk.import_module", return_value=self.backend):
             verifier = self.verifier()
             verifier.score_one("p", "a")
             verifier.score_one("p", "b")
@@ -82,33 +82,33 @@ class QKAdapterTests(unittest.TestCase):
             verifier.score("p", ["a"])
 
     def test_missing_artifact_does_not_import_backend(self):
-        with patch("deepmath.qk.import_module") as importer:
+        with patch("cayleypy.research.qk.import_module") as importer:
             verifier = QKVerifier(QKConfig(self.path.with_name("missing.json")))
-            with self.assertRaisesRegex(QKUnavailableError, "qk-zero-shot fit"):
+            with self.assertRaisesRegex(QKUnavailableError, "cayleypy-research qk fit"):
                 verifier.score_one("p", "a")
             importer.assert_not_called()
 
     def test_missing_dependency_has_actionable_error(self):
-        with patch("deepmath.qk.import_module", side_effect=ModuleNotFoundError("numpy")):
+        with patch("cayleypy.research.qk.import_module", side_effect=ModuleNotFoundError("numpy")):
             with self.assertRaisesRegex(QKUnavailableError, "pip install"):
                 self.verifier().score_one("p", "a")
 
     def test_lazy_inference_dependency_error_is_explicit(self):
         self.backend.ZeroShotQKScorer.side_effect = ImportError("torch")
-        with patch("deepmath.qk.import_module", return_value=self.backend):
+        with patch("cayleypy.research.qk.import_module", return_value=self.backend):
             with self.assertRaisesRegex(QKUnavailableError, "torch"):
                 self.verifier().score_one("p", "a")
 
     def test_invalid_artifact_does_not_initialize_model(self):
         self.artifact.validate.side_effect = ValueError("not calibration-free")
-        with patch("deepmath.qk.import_module", return_value=self.backend):
+        with patch("cayleypy.research.qk.import_module", return_value=self.backend):
             with self.assertRaisesRegex(ValueError, "not calibration-free"):
                 self.verifier().score_one("p", "a")
         self.backend.ZeroShotQKScorer.assert_not_called()
 
     def test_backend_failure_propagates_and_context_closes_hooks(self):
         self.scorer.rewards.side_effect = RuntimeError("out of memory")
-        with patch("deepmath.qk.import_module", return_value=self.backend):
+        with patch("cayleypy.research.qk.import_module", return_value=self.backend):
             with self.assertRaisesRegex(RuntimeError, "out of memory"):
                 with self.verifier() as verifier:
                     verifier.score_one("p", "a")
@@ -118,13 +118,13 @@ class QKAdapterTests(unittest.TestCase):
         for output in ([], [0.0, 0.1], [float("nan")], [float("inf")], [1.01], [-1.01]):
             with self.subTest(output=output):
                 self.scorer.rewards.return_value = output
-                with patch("deepmath.qk.import_module", return_value=self.backend):
+                with patch("cayleypy.research.qk.import_module", return_value=self.backend):
                     with self.verifier() as verifier:
                         with self.assertRaises(ValueError):
                             verifier.score_one("p", "a")
 
     def test_disabled_qk_is_unavailable_not_a_fabricated_score(self):
-        with patch("deepmath.qk.import_module") as importer:
+        with patch("cayleypy.research.qk.import_module") as importer:
             score = DisabledQKVerifier("No accelerator configured").score_one("p", "a")
             importer.assert_not_called()
         self.assertIsNone(score.margin)
@@ -134,7 +134,7 @@ class QKAdapterTests(unittest.TestCase):
         self.assertFalse(score.is_proof)
 
     def test_invalid_inputs_fail_before_loading(self):
-        with patch("deepmath.qk.import_module") as importer:
+        with patch("cayleypy.research.qk.import_module") as importer:
             for problem, candidates in [("", ["a"]), ("p", [""]), ("p", [None])]:
                 with self.subTest(problem=problem, candidates=candidates):
                     with self.assertRaises(ValueError):

@@ -5,8 +5,8 @@ import json
 import unittest
 from unittest.mock import patch
 
-from deepmath.holography import _cyclic_inversions, probe_area
-from deepmath.search import GraphSpec, lrx_graph, replay_path
+from cayleypy.research.holography import _cyclic_inversions, probe_area
+from cayleypy.research.search import GraphSpec, lrx_graph, replay_path
 
 
 class HolographyProbeTests(unittest.TestCase):
@@ -81,7 +81,7 @@ class HolographyProbeTests(unittest.TestCase):
         self.assertEqual(result["universal_claim"], "not_established")
 
     def test_resource_and_statistic_errors_fail_before_search(self):
-        with patch("deepmath.holography.exact_bfs") as search:
+        with patch("cayleypy.research.holography.exact_bfs") as search:
             for kwargs in ({"statistic": "paper_theorem"}, {"max_states": 100001},
                            {"max_states": 0}, {"max_states": True}, {"max_depth": -1}):
                 with self.subTest(kwargs=kwargs):

@@ -1,6 +1,6 @@
 # Research program
 
-DeepMath explores open conjectures through a cycle of proposed arguments, exact experiments, counterexample search, and proof. Agents develop competing ideas, review the evidence, and refine the next experiment. QK scores help choose which ideas deserve closer examination; mathematical claims are settled by proofs and verified computations.
+CayleyPy Research explores open conjectures through a cycle of proposed arguments, exact experiments, counterexample search, and proof. Agents develop competing ideas, review the evidence, and refine the next experiment. QK scores help choose which ideas deserve closer examination; mathematical claims are settled by proofs and verified computations.
 
 ## Cayley graph conjectures
 
@@ -34,4 +34,4 @@ uses swaps `(0,5)` and `(2,3)`. This counterexample rules out the naive wrapped-
 
 Every experiment should make its conclusion clear. A replayed path gives an upper bound for its endpoints; exhaustive traversal gives an exact finite diameter; a counterexample refutes the precise statement it violates. QK scores prioritize further work, while a general theorem requires an argument covering every value in its stated domain.
 
-Paper versions and source references are recorded in the [source manifest](../references/sources.json).
+Paper versions and source references are recorded in the [research references](../references/sources.json).

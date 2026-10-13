@@ -8,8 +8,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from deepmath.cli import default_problem, main
-from deepmath.providers import ProviderError
+from cayleypy.research.cli import default_problem, main
+from cayleypy.research.providers import ProviderError
 from provider_fixture import FixtureProvider
 
 
@@ -33,12 +33,12 @@ class ContinuingResearchTests(unittest.TestCase):
             self.assertEqual(main(["workspace", "init", str(workspace)]), 0)
             command = ["run", str(problem), "--config", str(config), "--workspace", str(workspace)]
             first = RecordingProvider()
-            with patch("deepmath.cli.ChatCompletionsProvider", return_value=first):
+            with patch("cayleypy.research.cli.ChatCompletionsProvider", return_value=first):
                 self.assertEqual(main(command + ["--output", str(root / "first")]), 0)
             self.assertEqual(first.requests[0][1]["research_memory"]["matching_runs"], 0)
 
             second = RecordingProvider()
-            with patch("deepmath.cli.ChatCompletionsProvider", return_value=second):
+            with patch("cayleypy.research.cli.ChatCompletionsProvider", return_value=second):
                 self.assertEqual(main(command + ["--output", str(root / "second")]), 0)
             prior = second.requests[0][1]["research_memory"]
             self.assertEqual(prior["matching_runs"], 1)
@@ -49,7 +49,7 @@ class ContinuingResearchTests(unittest.TestCase):
                 self.assertIn("feedback", payload, role)
 
             unrelated = root / "new-research"
-            with patch("deepmath.cli.ChatCompletionsProvider", return_value=RecordingProvider()), contextlib.redirect_stderr(io.StringIO()):
+            with patch("cayleypy.research.cli.ChatCompletionsProvider", return_value=RecordingProvider()), contextlib.redirect_stderr(io.StringIO()):
                 self.assertEqual(main(["run", str(problem), "--config", str(config),
                                        "--workspace", str(unrelated), "--output", str(root / "first")]), 2)
             self.assertFalse(unrelated.exists())
@@ -61,7 +61,7 @@ class ContinuingResearchTests(unittest.TestCase):
                     raise ProviderError("test review unavailable")
                 return original(role, system, payload)
             failing.complete = fail_critic
-            with patch("deepmath.cli.ChatCompletionsProvider", return_value=failing), contextlib.redirect_stderr(io.StringIO()):
+            with patch("cayleypy.research.cli.ChatCompletionsProvider", return_value=failing), contextlib.redirect_stderr(io.StringIO()):
                 self.assertEqual(main(command + ["--output", str(root / "third")]), 2)
             registry = json.loads((workspace / "registry.json").read_text())
             self.assertEqual(len(registry["tasks"]), 3)

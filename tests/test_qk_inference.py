@@ -8,12 +8,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from deepmath.cli import main
-from deepmath.qk import QKConfig, QKVerifier
+from cayleypy.research.cli import main
+from cayleypy.research.qk import QKConfig, QKVerifier
 
 
 INFERENCE_AVAILABLE = all(importlib.util.find_spec(name) is not None
-                          for name in ("qk_zero_shot", "transformers", "tokenizers", "torch"))
+                          for name in ("cayleypy.qk", "transformers", "tokenizers", "torch"))
 
 
 @unittest.skipUnless(INFERENCE_AVAILABLE, "Install .[research] for the local transformer integration test")
@@ -23,7 +23,7 @@ class QKInferenceTests(unittest.TestCase):
         import torch
         from tokenizers import Tokenizer, decoders, models, pre_tokenizers, trainers
         from transformers import LlamaConfig, LlamaForCausalLM, PreTrainedTokenizerFast
-        from qk_zero_shot import ZeroShotQKArtifact
+        from cayleypy.qk import ZeroShotQKArtifact
 
         examples = [
             ("What is two plus two?", "Adding two to two gives four."),

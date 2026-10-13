@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-from deepmath.search import (
+from cayleypy.research.search import (
     BackendUnavailable,
     GraphSpec,
     InvalidWitnessError,
@@ -166,7 +166,7 @@ class BackendContractTests(unittest.TestCase):
     def test_cayleypy_actual_contract_sets_target_as_center(self):
         raw = SimpleNamespace(path_found=True, path=[2], path_length=1)
         cp, calls = self.fake_cayleypy(raw)
-        with patch("deepmath.search.importlib.import_module", return_value=cp):
+        with patch("cayleypy.research.search.importlib.import_module", return_value=cp):
             result = cayleypy_search(lrx_graph(3), start=(0, 1, 2), target=(1, 0, 2), max_depth=5)
         self.assertEqual(calls["definition"]["central_state"], [1, 0, 2])
         self.assertEqual(calls["beam"]["max_steps"], 5)
@@ -181,7 +181,7 @@ class BackendContractTests(unittest.TestCase):
 
     def test_beam_failure_provides_no_distance_claim(self):
         cp, _ = self.fake_cayleypy(SimpleNamespace(path_found=False, path=None, path_length=0))
-        with patch("deepmath.search.importlib.import_module", return_value=cp):
+        with patch("cayleypy.research.search.importlib.import_module", return_value=cp):
             result = cayleypy_search(lrx_graph(3), start=(1, 0, 2), max_depth=0)
         self.assertIsNone(result.distance)
         self.assertIsNone(result.diameter)
@@ -198,18 +198,18 @@ class BackendContractTests(unittest.TestCase):
             SimpleNamespace(path_found=True, path=[2], path_length=5),
         ):
             cp, _ = self.fake_cayleypy(raw)
-            with patch("deepmath.search.importlib.import_module", return_value=cp):
+            with patch("cayleypy.research.search.importlib.import_module", return_value=cp):
                 with self.assertRaises(InvalidWitnessError):
                     cayleypy_search(lrx_graph(3), start=(1, 0, 2))
 
     def test_missing_optional_package_has_actionable_error(self):
-        with patch("deepmath.search.importlib.import_module", side_effect=ImportError("no package")):
+        with patch("cayleypy.research.search.importlib.import_module", side_effect=ImportError("no package")):
             with self.assertRaisesRegex(BackendUnavailable, "Install"):
                 cayleypy_search(lrx_graph(3), start=(1, 0, 2))
 
     def test_native_refuses_unsupported_hardware_without_importing(self):
-        with patch("deepmath.search.platform.system", return_value="Darwin"):
-            with patch("deepmath.search.importlib.import_module") as importer:
+        with patch("cayleypy.research.search.platform.system", return_value="Darwin"):
+            with patch("cayleypy.research.search.importlib.import_module") as importer:
                 with self.assertRaisesRegex(BackendUnavailable, "Linux"):
                     multigpu_search(lrx_graph(3), start=(1, 0, 2))
                 importer.assert_not_called()
@@ -229,9 +229,9 @@ class BackendContractTests(unittest.TestCase):
             return raw
 
         native = SimpleNamespace(NativeOptions=Options, beam_search=search)
-        modules = {"cayleypy": cp, "torch": torch, "multigpubeamsearch": native}
-        with patch("deepmath.search.platform.system", return_value="Linux"):
-            with patch("deepmath.search.importlib.import_module", side_effect=modules.__getitem__):
+        modules = {"cayleypy": cp, "torch": torch, "cayleypy.native": native}
+        with patch("cayleypy.research.search.platform.system", return_value="Linux"):
+            with patch("cayleypy.research.search.importlib.import_module", side_effect=modules.__getitem__):
                 result = multigpu_search(lrx_graph(3), start=(1, 0, 2), num_gpus=2)
         self.assertEqual(calls["native"]["backend"], "native")
         self.assertEqual(calls["native"]["native_options"].num_gpus, 2)

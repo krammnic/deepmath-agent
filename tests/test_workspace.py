@@ -7,13 +7,13 @@ from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import patch
 
-from deepmath.engine import run
-from deepmath.ledger import canonical, verify_run
-from deepmath.models import Problem, RunConfig
-from deepmath.providers import ProviderError
+from cayleypy.research.engine import run
+from cayleypy.research.ledger import canonical, verify_run
+from cayleypy.research.models import Problem, RunConfig
+from cayleypy.research.providers import ProviderError
 from provider_fixture import FixtureProvider
-from deepmath.qk import DisabledQKVerifier
-from deepmath.workspace import ResearchWorkspace, source_directory
+from cayleypy.research.qk import DisabledQKVerifier
+from cayleypy.research.workspace import ResearchWorkspace, source_directory
 
 
 class WorkspaceTests(unittest.TestCase):
@@ -36,7 +36,7 @@ class WorkspaceTests(unittest.TestCase):
         (destination / "unlisted.txt").write_text("excluded")
         task = self.workspace.publish_run(destination)
         reopened = ResearchWorkspace(self.workspace.root)
-        self.assertEqual(reopened.initialize()["protocol"], "AutoMathLab")
+        self.assertEqual(reopened.initialize()["protocol"], "cayleypy-research")
         memory = reopened.context(self.problem)
         self.assertEqual(memory["matching_runs"], 1)
         previous = memory["previous_runs"][0]
@@ -56,6 +56,18 @@ class WorkspaceTests(unittest.TestCase):
             self.assertTrue((project / kind / f"{task['id']}.json").is_file())
         review = json.loads((project / "reviews" / f"{task['id']}.json").read_text())
         self.assertEqual(review["verification_status"], "not-reviewed")
+
+    def test_previous_workspace_protocol_can_continue_without_rewriting_evidence(self):
+        self.workspace.publish_run(self.make_run())
+        metadata_path = self.workspace.root / "workspace.json"
+        metadata = json.loads(metadata_path.read_text())
+        metadata["protocol"] = "AutoMathLab"
+        metadata_path.write_text(json.dumps(metadata))
+        previous_metadata = metadata_path.read_bytes()
+        reopened = ResearchWorkspace(self.workspace.root)
+        self.assertEqual(reopened.context(self.problem)["matching_runs"], 1)
+        self.assertEqual(reopened.initialize()["protocol"], "AutoMathLab")
+        self.assertEqual(metadata_path.read_bytes(), previous_metadata)
 
     def test_exact_claim_and_graph_scope_prevents_memory_contamination(self):
         self.workspace.publish_run(self.make_run())
@@ -114,12 +126,12 @@ class WorkspaceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "protocol digest mismatch"):
             self.workspace.initialize()
 
-    def test_protocol_contains_exact_upstream_templates(self):
+    def test_protocol_contains_installed_research_templates(self):
         source = source_directory()
         for kind in ("hypothesis", "experiment", "review", "result", "handoff"):
             relative = Path("templates") / f"{kind}.md"
             self.assertEqual((source / relative).read_bytes(), (self.workspace.root / "protocol" / relative).read_bytes())
-        self.assertEqual((source / "AGENTS.md").read_bytes(), (self.workspace.root / "protocol" / "AGENTS.md").read_bytes())
+        self.assertEqual((source / "templates/protocol.md").read_bytes(), (self.workspace.root / "protocol/templates/protocol.md").read_bytes())
 
     def test_context_has_hard_size_limit_and_keeps_complete_archive(self):
         provider = FixtureProvider()

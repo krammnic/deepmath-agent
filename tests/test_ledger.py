@@ -8,9 +8,9 @@ from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import patch
 
-from deepmath.experiments import execute, graph_for
-from deepmath.ledger import Ledger, export_automathlab, now, verify_run
-from deepmath.models import Experiment, Problem, RunConfig
+from cayleypy.research.experiments import execute, graph_for
+from cayleypy.research.ledger import Ledger, export_research, now, verify_run
+from cayleypy.research.models import Experiment, Problem, RunConfig
 
 
 class GeneralGraphExportTests(unittest.TestCase):
@@ -36,8 +36,8 @@ class GeneralGraphExportTests(unittest.TestCase):
         ledger.finalize(summary)
         # Export/recovery must use recorded native definitions, without loading
         # or reinterpreting an optional graph constructor during reproduction.
-        with patch("deepmath.search._load_optional", side_effect=AssertionError("use the recorded graph definition")):
-            exported = export_automathlab(source, base / "export") / "experiments" / "run"
+        with patch("cayleypy.research.search._load_optional", side_effect=AssertionError("use the recorded graph definition")):
+            exported = export_research(source, base / "export") / "experiments" / "run"
             self.assertTrue(verify_run(exported)["valid"])
             for name in ("input.json", "summary.json", "manifest.json", "events.jsonl", "report.md"):
                 self.assertEqual((source / name).read_bytes(), (exported / name).read_bytes())

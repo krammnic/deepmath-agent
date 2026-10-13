@@ -1,6 +1,6 @@
 """Local provider fixture used only by automated tests."""
 
-from deepmath.providers import Completion
+from cayleypy.research.providers import Completion
 
 
 class FixtureProvider:

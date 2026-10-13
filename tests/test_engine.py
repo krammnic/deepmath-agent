@@ -4,12 +4,12 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from deepmath.cli import default_problem, main
-from deepmath.engine import run, select_ideas
-from deepmath.ledger import export_automathlab, verify_run
-from deepmath.models import Experiment, Idea, Problem, RunConfig
+from cayleypy.research.cli import default_problem, main
+from cayleypy.research.engine import run, select_ideas
+from cayleypy.research.ledger import export_research, verify_run
+from cayleypy.research.models import Experiment, Idea, Problem, RunConfig
 from provider_fixture import FixtureProvider
-from deepmath.qk import DisabledQKVerifier, QKScore, QKUnavailableError
+from cayleypy.research.qk import DisabledQKVerifier, QKScore, QKUnavailableError
 
 
 class RecordingProvider(FixtureProvider):
@@ -37,7 +37,7 @@ class ResearchTests(unittest.TestCase):
             self.assertTrue(all(score["margin"] is None for score in result["rounds"][0]["scores"]))
             self.assertTrue(verify_run(root)["valid"])
             self.assertEqual(main(["replay", str(root)]), 0)
-            exported = export_automathlab(root, Path(tmp) / "export")
+            exported = export_research(root, Path(tmp) / "export")
             self.assertTrue((exported / "experiments" / "run" / "summary.json").is_file())
             with (root / "report.md").open("a") as stream:
                 stream.write("tampered")
@@ -94,9 +94,9 @@ class ResearchTests(unittest.TestCase):
                "path_length": 28, "exact": False, "complete": False, "diameter": None}
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "run"
-            with patch("deepmath.engine.execute", return_value=old):
+            with patch("cayleypy.research.engine.execute", return_value=old):
                 run(default_problem(4), RunConfig(rounds=1, top_k=1), FixtureProvider(), DisabledQKVerifier(), root)
-            with patch("deepmath.cli.execute", return_value={**old, "path_length": 30}):
+            with patch("cayleypy.research.cli.execute", return_value={**old, "path_length": 30}):
                 self.assertEqual(main(["replay", str(root)]), 2)
 
 

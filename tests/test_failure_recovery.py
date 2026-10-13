@@ -6,13 +6,13 @@ from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import patch
 
-from deepmath.engine import run
-from deepmath.experiments import execute
-from deepmath.ledger import export_automathlab, verification_status, verify_run
-from deepmath.models import Experiment, Problem, RunConfig
-from deepmath.providers import ProviderError
+from cayleypy.research.engine import run
+from cayleypy.research.experiments import execute
+from cayleypy.research.ledger import export_research, verification_status, verify_run
+from cayleypy.research.models import Experiment, Problem, RunConfig
+from cayleypy.research.providers import ProviderError
 from provider_fixture import FixtureProvider
-from deepmath.qk import DisabledQKVerifier, QKUnavailableError
+from cayleypy.research.qk import DisabledQKVerifier, QKUnavailableError
 
 
 class FailingRoleProvider(FixtureProvider):
@@ -78,13 +78,13 @@ class FailureRecoveryTests(unittest.TestCase):
         self.assertEqual(summary["errors"][0]["role"], "holographer")
 
     def test_all_tool_errors_never_receive_author_checked_status(self):
-        with patch("deepmath.engine.execute", side_effect=RuntimeError("search unavailable")):
+        with patch("cayleypy.research.engine.execute", side_effect=RuntimeError("search unavailable")):
             summary = self.run_with(FixtureProvider())
         self.assertEqual(summary["status"], "completed_with_errors")
         self.assertEqual(summary["verification_status"], "not-reviewed")
         self.assertEqual(len(summary["errors"]), 2)
         self.assertIn("Verification: not-reviewed", (self.output / "report.md").read_text())
-        project = export_automathlab(self.output, self.base / "export")
+        project = export_research(self.output, self.base / "export")
         exported_text = (project / "experiments" / "run-with-spaces.md").read_text()
         self.assertIn("Run status: completed_with_errors", exported_text)
         self.assertIn("Verification status: not-reviewed", exported_text)
@@ -110,7 +110,7 @@ class FailureRecoveryTests(unittest.TestCase):
         extra = self.base / "unrelated.txt"
         extra.write_text("unrelated local content")
         (self.output / "unlisted-link.txt").symlink_to(extra)
-        project = export_automathlab(self.output, self.base / "export")
+        project = export_research(self.output, self.base / "export")
         artifacts = project / "experiments" / "run-with-spaces"
         expected = {entry["path_or_url"] for entry in json.loads((self.output / "manifest.json").read_text())["artifacts"]}
         self.assertEqual({path.name for path in artifacts.iterdir()}, expected | {"manifest.json"})
@@ -136,7 +136,7 @@ class FailureRecoveryTests(unittest.TestCase):
 
     def test_completed_area_probe_is_finite_author_checked_evidence(self):
         probe = execute(self.problem, Experiment.from_dict({"kind": "area_probe"}, self.problem), self.config)
-        with patch("deepmath.engine.execute", return_value=probe):
+        with patch("cayleypy.research.engine.execute", return_value=probe):
             summary = self.run_with(FixtureProvider())
         self.assertEqual(summary["status"], "completed")
         self.assertEqual(summary["verification_status"], "author-checked")

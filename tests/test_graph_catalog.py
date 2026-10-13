@@ -6,10 +6,10 @@ import json
 import unittest
 from unittest.mock import patch
 
-from deepmath.experiments import execute, graph_for
-from deepmath.holography import probe_area
-from deepmath.models import Experiment, Problem, RunConfig
-from deepmath.search import (BackendUnavailable, GraphSpec, apply_move, cayleypy_graph,
+from cayleypy.research.experiments import execute, graph_for
+from cayleypy.research.holography import probe_area
+from cayleypy.research.models import Experiment, Problem, RunConfig
+from cayleypy.research.search import (BackendUnavailable, GraphSpec, apply_move, cayleypy_graph,
                              cayleypy_search, exact_bfs, exact_diameter, graph_catalog,
                              graph_from_config, multigpu_search, replay_path)
 
@@ -159,7 +159,7 @@ class NativeCatalogTests(unittest.TestCase):
     def test_resolved_catalog_replays_without_loading_cayleypy(self):
         problem = make_problem({"family": "cayleypy", "constructor": "PermutationGroups.pancake", "kwargs": {"n": 4}})
         saved = json.loads(json.dumps(problem.to_dict()))
-        with patch("deepmath.search._load_optional", side_effect=AssertionError("must use frozen definition")):
+        with patch("cayleypy.research.search._load_optional", side_effect=AssertionError("must use frozen definition")):
             recovered = Problem.from_dict(saved)
             self.assertEqual(graph_for(recovered).to_dict(), graph_for(problem).to_dict())
             self.assertEqual(execute(recovered, Experiment("diameter"), RunConfig())["diameter"], 4)

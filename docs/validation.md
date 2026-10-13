@@ -1,8 +1,8 @@
 # Validation record — 13 October 2026
 
-The automated suite passed **114 tests with zero skips** in a clean Python 3.13.12 environment installed with `pip install '.[research]'`. Five additional upstream scoring tests passed. Coverage includes real CPU search, QK artifact fitting and inference, research continuity, experiment replay, failure recovery, and source integrity.
+Validation passed **109 research tests**, **387 native interface and model tests**, and **40 graph-library tests**, with no skips in those runs. Coverage includes real CPU search, QK artifact fitting and inference, research continuity, experiment replay, failure recovery, and evidence integrity. Validation uses Python 3.13.12 with `pip install '.[research]'`.
 
-A normal wheel and source distribution were built. Outside the checkout, the installed package loaded all research APIs, verified all 813 bundled upstream files against their hashes, resolved 51 graph constructors, created a research workspace from its packaged templates, and computed the SL(2,3) diameter. Native search sources were present in the installed backend's local source location.
+Installation checks exercise the complete Python API, 51 graph constructors, workspace creation, and the exact SL(2,3) diameter from outside the checkout. Native C++ and CUDA sources are included in the installed package for compilation on supported hardware.
 
 ## Computational results
 
@@ -27,11 +27,11 @@ The [saved LRX₈ search result](../examples/results/cayleypy-lrx8.json) contain
 
 ```bash
 PYTHONPATH=src python3 -m unittest discover -s tests -v
-python3 -m unittest discover -s vendor/qk-zero-shot/tests -v
-python3 scripts/bootstrap.py --check
+python3 -m pytest tests/native
+python3 -m pytest src/cayleypy/graphs_lib_test.py
 
-deepmath experiment examples/problems/lx-n6-diameter.json
-deepmath experiment examples/problems/lrx-n8-witness.json \
+cayleypy-research experiment examples/problems/lx-n6-diameter.json
+cayleypy-research experiment examples/problems/lrx-n8-witness.json \
   --backend cayleypy --beam-width 65536 --max-depth 40
 ```
 

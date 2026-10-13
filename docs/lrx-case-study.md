@@ -1,6 +1,6 @@
 # LRX: sharp lower bound and exact witness
 
-The research supplement *A sharp lower bound for the LRX diameter*, dated 25 September 2026, presents a proof developed through collaborating AI agents, together with a matching constructive witness and reported Lean verification. Its filename, fingerprint, and source details are recorded in the [source manifest](../references/sources.json).
+The research supplement *A sharp lower bound for the LRX diameter*, dated 25 September 2026, presents a proof developed through collaborating AI agents, together with a matching constructive witness and reported Lean verification. Its filename, fingerprint, and source details are recorded in the [research references](../references/sources.json).
 
 ## The result
 
@@ -25,7 +25,7 @@ the supplement proves
 d(e,p)=\binom n2,\qquad \operatorname{diam}(LRX_n)\geq\binom n2.
 \]
 
-The exact witness supplies the matching path for this pair. The universal upper bound \(\operatorname{diam}(LRX_n)\leq\binom n2\) remains the open question in the supplement and the cited [research roadmap](https://github.com/TryDotAtwo/AutoMathLab/blob/0d3880fdb94851c026a7362857b9edc425ccd881/projects/lrx/ROADMAP.md). The theorem begins at \(n=4\); the diameters at \(n=2\) and \(n=3\) are 1 and 2, respectively.
+The exact witness supplies the matching path for this pair. The universal upper bound \(\operatorname{diam}(LRX_n)\leq\binom n2\) remains the open question in the supplement. The theorem begins at \(n=4\); the diameters at \(n=2\) and \(n=3\) are 1 and 2, respectively.
 
 ## Constructing the witness
 
@@ -49,7 +49,7 @@ To invert a word, reverse its letters and exchange \(L\) with \(R\). Including t
 Construct and replay the witness at \(n=8\):
 
 ```sh
-deepmath experiment examples/problems/lrx-n8-witness.json --kind witness
+cayleypy-research experiment examples/problems/lrx-n8-witness.json --kind witness
 ```
 
 The resulting path reaches `(1,0,7,6,5,4,3,2)` in 28 moves.
@@ -58,4 +58,4 @@ The resulting path reaches `(1,0,7,6,5,4,3,2)` in 28 moves.
 
 Sections 16 and 19 report compilation of 30 local Lean modules and the submission entry point with Lean 4.34.0, with an axiom audit free of `sorryAx`. The [local checks](../tests/test_lrx.py) independently replay the constructive word for \(4\leq n\leq100\), check its length and relabeling, and establish exact witness distances by breadth-first search for \(4\leq n\leq7\).
 
-The supplement credits Astra Ultra material for the structural argument and reflection construction; Researcher A for structural and interval formalization; Researcher B for folded-coordinate transport and exact-witness composition; LRX_Math_Savant for the graph bridge; and the research team for review and coordination. The [source manifest](../references/sources.json) records the supplement's fingerprint and the compiler and source versions supporting its verification report.
+The supplement credits Astra Ultra material for the structural argument and reflection construction; Researcher A for structural and interval formalization; Researcher B for folded-coordinate transport and exact-witness composition; LRX_Math_Savant for the graph bridge; and the research team for review and coordination. The [research references](../references/sources.json) records the supplement's fingerprint and the compiler and source versions supporting its verification report.

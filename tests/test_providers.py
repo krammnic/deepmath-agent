@@ -3,8 +3,8 @@ import os
 import unittest
 from unittest.mock import MagicMock, patch
 
-from deepmath.cli import expand_environment
-from deepmath.providers import ChatCompletionsProvider, ProviderError
+from cayleypy.research.cli import expand_environment
+from cayleypy.research.providers import ChatCompletionsProvider, ProviderError
 
 
 class ProviderTests(unittest.TestCase):
@@ -13,7 +13,7 @@ class ProviderTests(unittest.TestCase):
                     "model": "resolved-model", "usage": {"total_tokens": 20}}
         opener = MagicMock()
         opener.open.return_value.__enter__.return_value.read.return_value = json.dumps(response).encode()
-        with patch("deepmath.providers.build_opener", return_value=opener), patch.dict(os.environ, {"TEST_LLM_KEY": "secret-value"}):
+        with patch("cayleypy.research.providers.build_opener", return_value=opener), patch.dict(os.environ, {"TEST_LLM_KEY": "secret-value"}):
             provider = ChatCompletionsProvider(model="configured-model", role_models={"critic": "critic-model"}, api_key_env="TEST_LLM_KEY")
             result = provider.complete("critic", "JSON please", {"data": "problem"})
         self.assertEqual(result.data, {"claim": "test"})
@@ -28,12 +28,12 @@ class ProviderTests(unittest.TestCase):
             opener = MagicMock()
             opener.open.return_value.__enter__.return_value.read.return_value = json.dumps(
                 {"choices": [{"finish_reason": finish, "message": {"content": content}}]}).encode()
-            with patch("deepmath.providers.build_opener", return_value=opener):
+            with patch("cayleypy.research.providers.build_opener", return_value=opener):
                 with self.assertRaises(ProviderError):
                     ChatCompletionsProvider(model="test", api_key_env="").complete("theorist", "JSON", {})
 
     def test_credentials_required_without_network(self):
-        with patch.dict(os.environ, {}, clear=True), patch("deepmath.providers.build_opener") as opener:
+        with patch.dict(os.environ, {}, clear=True), patch("cayleypy.research.providers.build_opener") as opener:
             with self.assertRaisesRegex(ProviderError, "Set OPENAI_API_KEY"):
                 ChatCompletionsProvider(model="test").complete("theorist", "JSON", {})
             opener.assert_not_called()

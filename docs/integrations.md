@@ -1,6 +1,6 @@
 # Run a research session
 
-Prepare the environment once, choose a model, and set the scope of the investigation. DeepMath supports Python 3.10 or later. Research sessions also require access to a text model and a fitted reasoning-scoring artifact.
+Prepare the environment once, choose a model, and set the scope of the investigation. CayleyPy Research supports Python 3.10 or later. Research sessions also require access to a text model and a fitted reasoning-scoring artifact.
 
 ## Prepare the environment
 
@@ -10,12 +10,14 @@ From the project root:
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install '.[research]'
-deepmath doctor
+cayleypy-research doctor
 ```
 
-The repository and built package contain pinned source snapshots. No additional repository checkout is needed. `python scripts/bootstrap.py --check` verifies bundled files offline. Revision, file integrity, and distribution terms are recorded in the [source lock](../dependencies.lock.json) and its source manifest.
+The research agents, graph algorithms, reasoning scorer, and native search share one installation.
 
 For accelerated search across several GPUs, prepare a Linux machine with the requested NVIDIA devices, CUDA toolkit, compatible compiler, and NCCL. Use [the GPU configuration](../configs/multigpu.json). The installation includes the native search sources; first use may provision compiler dependencies, compile, and calibrate the runtime.
+
+Python investigations use the same `CayleyGraph.beam_search` API: select `backend="native"` for CUDA execution or `backend="auto"` to allow CPU fallback during preparation. The default remains the PyTorch implementation. Backend selection requires no activation or method patching.
 
 ## Prepare reasoning scores
 
@@ -23,7 +25,7 @@ Fit the scorer on a varied reference set of mathematical problems and proposed s
 
 ```bash
 mkdir -p artifacts
-deepmath qk fit \
+cayleypy-research qk fit \
   --reference-csv unlabeled_reference.csv \
   --model Qwen/Qwen3-8B \
   --revision b968826d9c46dd6066d109eabc6255188de91218 \
@@ -53,31 +55,31 @@ For a local model server, start from [the local configuration](../configs/local-
 ## Run and review
 
 ```bash
-deepmath workspace init research
-deepmath run examples/problems/lrx-n6-diameter.json \
+cayleypy-research workspace init research
+cayleypy-research run examples/problems/lrx-n6-diameter.json \
   --config configs/research.json --workspace research --output runs/lrx-research
 ```
 
 Choose a new output directory for every session. Reuse the workspace to carry verified run records, failed approaches, and open obligations into the next session on the same problem. Records from different problem definitions stay separate. The runner checks required scoring prerequisites before making model requests. Completed experiments remain available if a later step fails.
 
 ```bash
-deepmath verify-run runs/lrx-research
-deepmath replay runs/lrx-research
-deepmath export runs/lrx-research --destination exports/lrx-research
+cayleypy-research verify-run runs/lrx-research
+cayleypy-research replay runs/lrx-research
+cayleypy-research export runs/lrx-research --destination exports/lrx-research
 ```
 
 Export prepares a local package for review. Inspect saved context or register an existing session with:
 
 ```bash
-deepmath workspace context research examples/problems/lrx-n6-diameter.json
-deepmath workspace add research runs/lrx-research
+cayleypy-research workspace context research examples/problems/lrx-n6-diameter.json
+cayleypy-research workspace add research runs/lrx-research
 ```
 
 The [validation record](validation.md) describes the execution coverage established so far.
 
 ## Define another graph
 
-Use `deepmath graphs` to inspect constructor names and parameters. A problem can select a catalog graph directly:
+Use `cayleypy-research graphs` to inspect constructor names and parameters. A problem can select a catalog graph directly:
 
 ```json
 {
@@ -93,6 +95,6 @@ Use `deepmath graphs` to inspect constructor names and parameters. A problem can
 }
 ```
 
-Inspect the resolved action with `deepmath graph problem.json`, then use `experiment` or `run`. Explicit `permutation` graphs accept named gather generators and a `central_state`, including repeated labels. Explicit `matrix` graphs accept named square matrix generators, a modulus, and an optional central state. Targets may use flat arrays or matrix rows. The run freezes the resolved definition for replay.
+Inspect the resolved action with `cayleypy-research graph problem.json`, then use `experiment` or `run`. Explicit `permutation` graphs accept named gather generators and a `central_state`, including repeated labels. Explicit `matrix` graphs accept named square matrix generators, a modulus, and an optional central state. Targets may use flat arrays or matrix rows. The run freezes the resolved definition for replay.
 
 Diameter experiments share the state budget across all necessary roots for nonfree actions. Matrix experiments use exact arithmetic for verification and support CPU beam search; the native multi-GPU runtime accepts gather actions. For custom Python investigations, the installation provides the complete CayleyPy API, including BFS variants, random walks, datasets, predictors, models, and training utilities.

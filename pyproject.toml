@@ -3,27 +3,35 @@ requires = ["setuptools>=69"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "deepmath-agent"
-version = "0.2.0"
-description = "Multiagent mathematical research with reproducible experiments and proof obligations"
+name = "cayleypy-research"
+version = "0.3.0"
+description = "CayleyPy graph search and multiagent mathematical research"
 requires-python = ">=3.10"
 readme = "README.md"
-dependencies = []
+dependencies = ["h5py", "kagglehub", "networkx", "numba", "numpy>=1.26", "scipy", "torch>=2.6"]
 
 [project.optional-dependencies]
 test = ["pytest>=8"]
-search = ["h5py", "kagglehub", "networkx", "numba", "numpy>=1.26", "scipy", "torch>=2.6"]
+docs = ["sphinx>=9.1.0", "sphinx_rtd_theme"]
+search = []
 qk = ["numpy>=1.26", "torch>=2.6", "transformers>=4.56.2,<5", "accelerate>=0.26"]
 research = ["h5py", "kagglehub", "networkx", "numba", "numpy>=1.26", "scipy", "torch>=2.6", "transformers>=4.56.2,<5", "accelerate>=0.26", "cmake>=3.28", "ninja>=1.11"]
 
 [project.scripts]
-deepmath = "deepmath.cli:main"
-qk-zero-shot = "qk_zero_shot.cli:main"
+cayleypy-research = "cayleypy.research.cli:main"
+deepmath = "cayleypy.research.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+cayleypy = ["LICENSE", "data/*.csv", "puzzles/gap_files/**/*"]
+"cayleypy.research" = ["templates/*.md", "templates/*.json"]
+"cayleypy.native" = ["LICENSE"]
 
 [tool.setuptools.data-files]
-"share/deepmath" = ["dependencies.lock.json"]
-"share/deepmath/references" = ["references/sources.json"]
-"share/deepmath/docs" = ["docs/research.md", "docs/lrx-case-study.md"]
+"share/cayleypy/research/references" = ["references/sources.json"]
+"share/cayleypy/research/docs" = ["docs/research.md", "docs/lrx-case-study.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
